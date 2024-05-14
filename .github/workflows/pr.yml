@@ -22,8 +22,6 @@ jobs:
       - name: Add asdf shims to PATH
         run: |
           echo "${HOME}/.asdf/shims" >> $GITHUB_PATH
-      - name: Set up integration tests
-        run: task test.up
       - name: Lint
         run: go vet ./...
       - name: Run integration tests
