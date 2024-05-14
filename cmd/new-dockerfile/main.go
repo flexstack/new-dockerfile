@@ -21,6 +21,8 @@ func main() {
 	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output")
 	var runtimeArg string
 	flag.StringVar(&runtimeArg, "runtime", "", "Force a specific runtime")
+	var write bool
+	flag.BoolVar(&write, "write", false, "Write the Dockerfile to disk at ./Dockerfile")
 	flag.Parse()
 
 	level := slog.LevelInfo
@@ -64,7 +66,7 @@ func main() {
 	if r == nil {
 		r, err = df.MatchRuntime(path)
 		if err != nil {
-			log.Error("fatal error", "error", err.Error())
+			log.Error("Fatal error: " + err.Error())
 			os.Exit(1)
 		}
 	}
@@ -74,8 +76,13 @@ func main() {
 		os.Exit(1)
 	}
 
+	if !write {
+		fmt.Println(string(contents))
+		return
+	}
+
 	if err = os.WriteFile(filepath.Join(path, "Dockerfile"), contents, 0644); err != nil {
-		log.Error("fatal error", "error", err.Error())
+		log.Error("Fatal error: " + err.Error())
 		os.Exit(1)
 	}
 
