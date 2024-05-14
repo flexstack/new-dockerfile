@@ -1,0 +1,269 @@
+package runtime
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"os"
+	"path/filepath"
+	"strings"
+	"text/template"
+)
+
+type Ruby struct {
+	Log *slog.Logger
+}
+
+func (d *Ruby) Name() RuntimeName {
+	return RuntimeNameRuby
+}
+
+func (d *Ruby) Match(path string) bool {
+	checkPaths := []string{
+		filepath.Join(path, "Gemfile"),
+		filepath.Join(path, "Gemfile.lock"),
+		filepath.Join(path, "Rakefile"),
+		filepath.Join(path, "config.ru"),
+		filepath.Join(path, "config/environment.rb"),
+	}
+
+	for _, p := range checkPaths {
+		if _, err := os.Stat(p); err == nil {
+			d.Log.Info("Detected Ruby project")
+			return true
+		}
+	}
+
+	d.Log.Debug("Ruby project not detected")
+	return false
+}
+
+func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
+	tmpl, err := template.New("Dockerfile").Parse(rubyTemplate)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to parse template")
+	}
+
+	// Parse version from go.mod
+	version, err := findRubyVersion(path, d.Log)
+	if err != nil {
+		return nil, err
+	}
+
+	installCMD := "bundle install"
+	packageManager := ""
+
+	if _, err := os.Stat(filepath.Join(path, "package-lock.json")); err == nil {
+		packageManager = "npm"
+		installCMD = installCMD + " && npm ci"
+	} else if _, err := os.Stat(filepath.Join(path, "pnpm-lock.yaml")); err == nil {
+		packageManager = "pnpm"
+		installCMD = installCMD + " && corepack enable pnpm && pnpm i --frozen-lockfile"
+	} else if _, err := os.Stat(filepath.Join(path, "yarn.lock")); err == nil {
+		packageManager = "yarn"
+		installCMD = installCMD + " && yarn --frozen-lockfile"
+	} else if _, err := os.Stat(filepath.Join(path, "bun.lockb")); err == nil {
+		packageManager = "bun"
+		installCMD = installCMD + " && bun install"
+	}
+
+	isRails := isRailsProject(path)
+	buildCMD := ""
+	startCMD := ""
+	if isRails {
+		buildCMD = "bundle exec rake assets:precompile"
+		startCMD = "bundle exec rails server -b 0.0.0.0 -p ${PORT}"
+	} else {
+		configFiles := []string{"config.ru", "config/environment.rb", "Rakefile"}
+
+		for _, fn := range configFiles {
+			_, err := os.Stat(filepath.Join(path, fn))
+			if err != nil {
+				continue
+			}
+
+			switch fn {
+			case "config.ru":
+				startCMD = "bundle exec rackup config.ru -p ${PORT}"
+			case "config/environment.rb":
+				startCMD = "bundle exec ruby script/server"
+			case "Rakefile":
+				startCMD = "bundle exec rake"
+			}
+
+			break
+		}
+	}
+
+	d.Log.Info(
+		fmt.Sprintf(`Detected defaults 
+  Ruby version         : %s
+  Node package manager : %s
+  Install command      : %s
+  Build command        : %s
+  Start command        : %s
+
+  Docker build arguments can supersede these defaults if provided.
+  See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *version, packageManager, installCMD, buildCMD, startCMD),
+	)
+
+	if installCMD != "" {
+		installCMDJSON, _ := json.Marshal(installCMD)
+		installCMD = string(installCMDJSON)
+	}
+
+	if buildCMD != "" {
+		buildCMDJSON, _ := json.Marshal(buildCMD)
+		buildCMD = string(buildCMDJSON)
+	}
+
+	if startCMD != "" {
+		startCMDJSON, _ := json.Marshal(startCMD)
+		startCMD = string(startCMDJSON)
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+		"Version":    *version,
+		"InstallCMD": installCMD,
+		"BuildCMD":   buildCMD,
+		"StartCMD":   startCMD,
+	}); err != nil {
+		return nil, fmt.Errorf("Failed to execute template")
+	}
+
+	return buf.Bytes(), nil
+}
+
+var rubyTemplate = strings.TrimSpace(`
+ARG VERSION={{.Version}}
+FROM ruby:${VERSION}-slim
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
+
+ARG INSTALL_CMD={{.InstallCMD}}
+ARG BUILD_CMD={{.BuildCMD}}
+ENV NODE_ENV=production
+
+RUN chown -R nonroot:nonroot /app
+COPY --chown=nonroot:nonroot . .
+
+RUN if [ ! -z "${INSTALL_CMD}" ]; then $INSTALL_CMD; fi
+RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
+
+ENV PORT=8080
+USER nonroot:nonroot
+
+ARG START_CMD={{.StartCMD}}
+ENV START_CMD=${START_CMD}
+RUN if [ -z "${START_CMD}" ]; then echo "Unable to detect a container start command" && exit 1; fi
+CMD ${START_CMD}
+`)
+
+func findRubyVersion(path string, log *slog.Logger) (*string, error) {
+	version := ""
+	versionFiles := []string{
+		".tool-versions",
+		".ruby-version",
+		"Gemfile",
+	}
+
+	for _, file := range versionFiles {
+		fp := filepath.Join(path, file)
+		_, err := os.Stat(fp)
+
+		if err == nil {
+			f, err := os.Open(fp)
+			if err != nil {
+				continue
+			}
+
+			defer f.Close()
+			switch file {
+			case ".tool-versions":
+				scanner := bufio.NewScanner(f)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if strings.Contains(line, "ruby") {
+						version = strings.Split(line, " ")[1]
+						break
+					}
+				}
+
+				if err := scanner.Err(); err != nil {
+					return nil, fmt.Errorf("Failed to read .tool-versions file")
+				}
+
+				log.Info("Detected Ruby version in .tool-versions: " + version)
+
+			case ".ruby-version":
+				scanner := bufio.NewScanner(f)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if line != "" {
+						version = line
+						break
+					}
+				}
+
+				if err := scanner.Err(); err != nil {
+					return nil, fmt.Errorf("Failed to read go.mod file")
+				}
+
+				log.Info("Detected Ruby version from .ruby-version: " + version)
+
+			case "Gemfile":
+				scanner := bufio.NewScanner(f)
+				for scanner.Scan() {
+					line := scanner.Text()
+					if strings.Contains(line, "ruby") {
+						version = strings.Split(line, "'")[1]
+						break
+					}
+				}
+
+				if err := scanner.Err(); err != nil {
+					return nil, fmt.Errorf("Failed to read Gemfile")
+				}
+
+				log.Info("Detected Ruby version from Gemfile: " + version)
+			}
+
+			f.Close()
+			if version != "" {
+				break
+			}
+		}
+	}
+
+	if version == "" {
+		version = "3.1"
+	}
+
+	return &version, nil
+}
+
+func isRailsProject(path string) bool {
+	_, err := os.Stat(filepath.Join(path, "Gemfile"))
+	if err == nil {
+		f, err := os.Open(filepath.Join(path, "Gemfile"))
+		if err != nil {
+			return false
+		}
+
+		defer f.Close()
+
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			line := scanner.Text()
+			if strings.Contains(line, "gem 'rails'") {
+				return true
+			}
+		}
+	}
+
+	return false
+}

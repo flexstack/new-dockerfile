@@ -1,0 +1,41 @@
+{
+  "name": "new-dockerfile",
+  "version": "0.1.1",
+  "description": "Autogenerate Dockerfiles from your project source code",
+  "main": "index.js",
+  "bin": {
+    "new-dockerfile": "bin/new-dockerfile"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "arm64",
+    "x64"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/flexstack/new-dockerfile.git"
+  },
+  "keywords": [
+    "flexstack",
+    "docker",
+    "dockerfile",
+    "dockerfile-generator",
+    "dockerfile-generator-cli",
+    "dockerfile-generator-tool",
+    "generate-dockerfile",
+    "autogenerate-dockerfile"
+  ],
+  "author": "Jared Lunde",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/flexstack/new-dockerfile/issues"
+  },
+  "homepage": "https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile"
+}
