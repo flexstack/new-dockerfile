@@ -196,7 +196,7 @@ CMD ${START_CMD}
 `)
 
 func findNodeVersion(path string, log *slog.Logger) (*string, error) {
-	version := "lts"
+	version := ""
 	versionFiles := []string{
 		".nvmrc",
 		".node-version",
@@ -221,6 +221,7 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "nodejs") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Node version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -229,14 +230,13 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Node version in .tool-versions: " + version)
-
 			case ".nvmrc", ".node-version":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if strings.HasPrefix(line, "v") {
 						version = strings.TrimPrefix(line, "v")
+						log.Info("Detected Node version in " + file + ": " + version)
 						break
 					}
 				}
@@ -244,15 +244,18 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read version file")
 				}
-
-				log.Info("Detected Node version in " + file + ": " + version)
 			}
 
 			f.Close()
-			if version != "lts" {
+			if version != "" {
 				break
 			}
 		}
+	}
+
+	if version == "" {
+		version = "lts"
+		log.Info(fmt.Sprintf("No Node version detected. Using %s.", version))
 	}
 
 	return &version, nil

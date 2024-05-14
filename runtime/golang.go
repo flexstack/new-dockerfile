@@ -155,6 +155,7 @@ func findGoVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "golang") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Go version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -163,14 +164,13 @@ func findGoVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Go version in .tool-versions: " + version)
-
 			case "go.mod":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if strings.Contains(line, "go ") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Go version in go.mod: " + version)
 						break
 					}
 				}
@@ -179,7 +179,6 @@ func findGoVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read go.mod file")
 				}
 
-				log.Info("Detected Go version: " + version)
 			}
 
 			f.Close()
@@ -191,6 +190,7 @@ func findGoVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "1.17"
+		log.Info(fmt.Sprintf("No Go version detected. Using: %s", version))
 	}
 
 	return &version, nil

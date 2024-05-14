@@ -182,7 +182,7 @@ CMD ${START_CMD}
 `)
 
 func findBunVersion(path string, log *slog.Logger) (*string, error) {
-	version := "latest"
+	version := ""
 	versionFiles := []string{
 		".tool-versions",
 	}
@@ -205,6 +205,7 @@ func findBunVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "bun") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Bun version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -213,14 +214,18 @@ func findBunVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Bun version in .tool-versions: " + version)
 			}
 
 			f.Close()
-			if version != "latest" {
+			if version != "" {
 				break
 			}
 		}
+	}
+
+	if version == "" {
+		version = "latest"
+		log.Info(fmt.Sprintf("No Bun version detected. Using: %s", version))
 	}
 
 	return &version, nil

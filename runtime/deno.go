@@ -196,7 +196,7 @@ CMD ${START_CMD}
 `)
 
 func findDenoVersion(path string, log *slog.Logger) (*string, error) {
-	version := "latest"
+	version := ""
 	versionFiles := []string{
 		".tool-versions",
 	}
@@ -219,6 +219,7 @@ func findDenoVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "deno") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Deno version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -226,15 +227,18 @@ func findDenoVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
-
-				log.Info("Detected Deno version in .tool-versions: " + version)
 			}
 
 			f.Close()
-			if version != "latest" {
+			if version != "" {
 				break
 			}
 		}
+	}
+
+	if version == "" {
+		version = "latest"
+		log.Info(fmt.Sprintf("No Deno version detected. Using: %s", version))
 	}
 
 	return &version, nil

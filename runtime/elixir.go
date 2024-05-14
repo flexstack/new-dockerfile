@@ -52,26 +52,26 @@ func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	appName, err := findAppName(path)
+	BinName, err := findBinName(path)
 	if err != nil {
 		return nil, err
 	}
 
 	d.Log.Info(
 		fmt.Sprintf(`Detected defaults 
-  Elixir version       : %s
-  Erlang version       : %s
-  App name             : %s
+  Elixir version : %s
+  Erlang version : %s
+  Binary name    : %s
 
   Docker build arguments can supersede these defaults if provided.
-  See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *elixirVersion, *otpVersion, appName),
+  See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *elixirVersion, *otpVersion, BinName),
 	)
 
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
 		"ElixirVersion": *elixirVersion,
 		"OTPVersion":    strings.Split(*otpVersion, ".")[0],
-		"AppName":       appName,
+		"BinName":       BinName,
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
@@ -120,11 +120,11 @@ ENV LC_ALL en_US.UTF-8
 ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
-ARG APP_NAME={{.AppName}}
-ENV APP_NAME=${APP_NAME}
-RUN if [ -z "${APP_NAME}" ]; then echo "Unable to detect an app name" && exit 1; fi
-COPY --from=build --chown=nonroot:nonroot /app/_build/${MIX_ENV}/rel/${APP_NAME} ./
-RUN cp /app/bin/${APP_NAME} /app/bin/server
+ARG BIN_NAME={{.BinName}}
+ENV BIN_NAME=${BIN_NAME}
+RUN if [ -z "${BIN_NAME}" ]; then echo "Unable to detect an app name" && exit 1; fi
+COPY --from=build --chown=nonroot:nonroot /app/_build/${MIX_ENV}/rel/${BIN_NAME} ./
+RUN cp /app/bin/${BIN_NAME} /app/bin/server
 
 ENV PORT=8080
 USER nonroot:nonroot
@@ -157,6 +157,7 @@ func findElixirVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "elixir") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Elixir version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -165,14 +166,13 @@ func findElixirVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Elixir version in .tool-versions: " + version)
-
 			case ".elixir-version":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if line != "" {
 						version = line
+						log.Info("Detected Elixir version from .elixir-version: " + version)
 						break
 					}
 				}
@@ -180,8 +180,6 @@ func findElixirVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .elixir-version file")
 				}
-
-				log.Info("Detected Elixir version from .elixir-version: " + version)
 			}
 
 			f.Close()
@@ -193,6 +191,7 @@ func findElixirVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "1.12"
+		log.Info(fmt.Sprintf("No Elixir version detected. Using: %s", version))
 	}
 
 	return &version, nil
@@ -223,6 +222,7 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "erlang") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Erlang version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -231,14 +231,13 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Erlang version in .tool-versions: " + version)
-
 			case ".erlang-version":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if line != "" {
 						version = line
+						log.Info("Detected Erlang version from .erlang-version: " + version)
 						break
 					}
 				}
@@ -247,7 +246,6 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .erlang-version file")
 				}
 
-				log.Info("Detected Erlang version from .erlang-version: " + version)
 			}
 
 			f.Close()
@@ -259,6 +257,7 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "26.2.5"
+		log.Info(fmt.Sprintf("No Erlang version detected. Using: %s", version))
 	}
 
 	return &version, nil
@@ -269,7 +268,7 @@ func isPhoenixProject(path string) bool {
 	return err == nil
 }
 
-func findAppName(path string) (string, error) {
+func findBinName(path string) (string, error) {
 	configFile, err := os.Open(filepath.Join(path, "mix.exs"))
 	if err != nil {
 		return "", err

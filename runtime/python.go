@@ -202,6 +202,7 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "python") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Python version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -210,14 +211,13 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
-				log.Info("Detected Python version in .tool-versions: " + version)
-
 			case ".python-version":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if line != "" {
 						version = line
+						log.Info("Detected Python version from .python-version: " + version)
 						break
 					}
 				}
@@ -226,14 +226,13 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .python-version file")
 				}
 
-				log.Info("Detected Python version from .python-version: " + version)
-
 			case "runtime.txt":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
 					if strings.HasPrefix(line, "python-") {
 						version = strings.TrimPrefix(line, "python-")
+						log.Info("Detected Python version from runtime.txt: " + version)
 						break
 					}
 				}
@@ -242,7 +241,6 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read runtime.txt file")
 				}
 
-				log.Info("Detected Python version from runtime.txt: " + version)
 			}
 
 			f.Close()
@@ -254,6 +252,7 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "3.12"
+		log.Info(fmt.Sprintf("No Python version detected. Using %s.", version))
 	}
 
 	return &version, nil

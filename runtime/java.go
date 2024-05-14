@@ -277,6 +277,7 @@ func findGradleVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "gradle") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Gradle version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -284,8 +285,6 @@ func findGradleVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
-
-				log.Info("Detected Gradle version in .tool-versions: " + version)
 			}
 
 			f.Close()
@@ -297,6 +296,7 @@ func findGradleVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "8"
+		log.Info(fmt.Sprintf("No Gradle version detected. Using: %s", version))
 	}
 
 	return &version, nil
@@ -324,6 +324,7 @@ func findMavenVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "maven") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected Maven version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -331,8 +332,6 @@ func findMavenVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
-
-				log.Info("Detected Gradle version in .tool-versions: " + version)
 			}
 
 			f.Close()
@@ -344,6 +343,7 @@ func findMavenVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "3"
+		log.Info(fmt.Sprintf("No Maven version detected. Using: %s", version))
 	}
 
 	return &version, nil

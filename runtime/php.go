@@ -193,6 +193,7 @@ func findPHPVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.Contains(line, "php") {
 						version = strings.Split(line, " ")[1]
+						log.Info("Detected PHP version in .tool-versions: " + version)
 						break
 					}
 				}
@@ -200,8 +201,6 @@ func findPHPVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
-
-				log.Info("Detected PHP version in .tool-versions: " + version)
 
 			case "composer.json":
 				var composerJSON map[string]interface{}
@@ -226,10 +225,9 @@ func findPHPVersion(path string, log *slog.Logger) (*string, error) {
 						}
 
 						version = strings.TrimSuffix(version, ".")
+						log.Info("Detected PHP version from composer.json: " + version)
 					}
 				}
-
-				log.Info("Detected PHP version from composer.json: " + version)
 			}
 
 			f.Close()
@@ -241,6 +239,7 @@ func findPHPVersion(path string, log *slog.Logger) (*string, error) {
 
 	if version == "" {
 		version = "8.3"
+		log.Info(fmt.Sprintf("No PHP version detected. Using: %s", version))
 	}
 
 	return &version, nil
