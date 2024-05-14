@@ -21,6 +21,8 @@ func main() {
 	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output")
 	var runtimeArg string
 	flag.StringVar(&runtimeArg, "runtime", "", "Force a specific runtime")
+	var quiet bool
+	flag.BoolVar(&quiet, "quiet", false, "Disable all log output except errors")
 	var write bool
 	flag.BoolVar(&write, "write", false, "Write the Dockerfile to disk at ./Dockerfile")
 	flag.Parse()
@@ -28,9 +30,11 @@ func main() {
 	level := slog.LevelInfo
 	if os.Getenv("DEBUG") != "" {
 		level = slog.LevelDebug
+	} else if quiet {
+		level = slog.LevelError
 	}
 
-	handler := tint.NewHandler(os.Stdout, &tint.Options{
+	handler := tint.NewHandler(os.Stderr, &tint.Options{
 		Level:      level,
 		TimeFormat: time.Kitchen,
 		NoColor:    noColor,
@@ -81,12 +85,11 @@ func main() {
 		return
 	}
 
-	if err = os.WriteFile(filepath.Join(path, "Dockerfile"), contents, 0644); err != nil {
+	output := filepath.Join(path, "Dockerfile")
+	if err = os.WriteFile(output, contents, 0644); err != nil {
 		log.Error("Fatal error: " + err.Error())
 		os.Exit(1)
 	}
 
-	// a.log.Info("Auto-generated Dockerfile for project using " + string(lang.Name()) + "\n" + *contents)
-	log.Info("Auto-generated Dockerfile for project using " + string(r.Name()))
-	return
+	log.Info(fmt.Sprintf("Auto-generated Dockerfile for project using %s: %s", string(r.Name()), output))
 }
