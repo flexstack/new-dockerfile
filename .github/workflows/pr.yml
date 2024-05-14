@@ -1,0 +1,28 @@
+name: Pull request
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  vet:
+    name: Vet
+    runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.head_ref }}-vet
+      cancel-in-progress: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Setup asdf
+        uses: asdf-vm/actions/install@v3
+      - name: Install dependencies
+        run: go mod download
+      - name: Add asdf shims to PATH
+        run: |
+          echo "${HOME}/.asdf/shims" >> $GITHUB_PATH
+      - name: Lint
+        run: go vet ./...
+      - name: Run integration tests
+        run: go test -v ./...

@@ -1,0 +1,6 @@
+{
+  "tasks": {
+    "start": "deno run --allow-net mod.ts",
+    "cache": "deno cache mod.ts"
+  }
+}
