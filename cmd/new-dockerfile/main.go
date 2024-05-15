@@ -52,7 +52,7 @@ func main() {
 		runtimes := df.ListRuntimes()
 
 		for _, rt := range runtimes {
-			if strings.ToLower(string(rt.Name())) == strings.ToLower(runtimeArg) {
+			if strings.EqualFold(string(rt.Name()), runtimeArg) {
 				r = rt
 				break
 			}
@@ -60,8 +60,15 @@ func main() {
 		if r == nil {
 			runtimeNames := make([]string, len(runtimes))
 			for i, rt := range runtimes {
-				runtimeNames[i] = string(rt.Name())
+				runtimeNames[i] = strings.ToLower(string(rt.Name()))
 			}
+
+			if runtimeArg == "list" {
+				fmt.Println("Available runtimes:")
+				fmt.Println("  - " + strings.Join(runtimeNames, "\n  - "))
+				os.Exit(0)
+			}
+
 			log.Error(fmt.Sprintf(`Runtime "%s" not found. Expected one of: %s`, runtimeArg, "\n  - "+strings.Join(runtimeNames, "\n  - ")))
 			os.Exit(1)
 		}

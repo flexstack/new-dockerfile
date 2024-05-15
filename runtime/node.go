@@ -78,7 +78,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 	scripts, ok := packageJSON["scripts"].(map[string]interface{})
 	if ok {
 		d.Log.Info("Detected scripts in package.json")
-		startCommands := []string{"start:prod", "start:production", "start-prod", "start-production", "start"}
+		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
 		for _, cmd := range startCommands {
 			if _, ok := scripts[cmd].(string); ok {
 				startCMD = fmt.Sprintf("%s run %s", packageManager, cmd)
@@ -176,7 +176,7 @@ ENV NODE_ENV=production
 ARG BUILD_CMD={{.BuildCMD}}
 RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
 
-FROM base AS final
+FROM base AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
