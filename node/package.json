@@ -1,17 +1,23 @@
 {
   "name": "new-dockerfile",
-  "version": "0.1.3",
+  "version": "0.1.8",
   "config": {
     "bin_version": "0.1.0"
   },
   "description": "Autogenerate Dockerfiles from your project source code",
   "main": "index.js",
   "bin": {
-    "new-dockerfile": "bin/new-dockerfile"
+    "new-dockerfile": "./bin/new-dockerfile"
   },
   "scripts": {
     "postinstall": "node install.js"
   },
+  "files": [
+    "README.md",
+    "LICENSE",
+    "install.js",
+    "bin/new-dockerfile"
+  ],
   "os": [
     "darwin",
     "linux",

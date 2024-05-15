@@ -5,8 +5,6 @@ const { unzipSync } = require("zlib");
 const packageJson = require("./package.json");
 const fs = require("fs");
 
-function getPlatform() {}
-
 async function downloadCli(version, platform) {
   const ext = platform.os === "win32" ? ".zip" : ".tar.gz";
   const response = await fetch(
@@ -18,7 +16,7 @@ async function downloadCli(version, platform) {
   try {
     buffer = unzipSync(tgz);
   } catch (cause) {
-    throw new Error("Invalid gzip data", { cause });
+    process.exit(1);
   }
 
   function str(i, n) {
@@ -29,20 +27,22 @@ async function downloadCli(version, platform) {
   }
   let offset = 0;
   const dst = platform.exe;
+  fs.mkdirSync("bin", { recursive: true });
   while (offset < buffer.length) {
-    const name = str(offset, 100).replace("package/", "");
     const size = parseInt(str(offset + 124, 12), 8);
     offset += 512;
     if (!isNaN(size)) {
       write(dst, buffer.subarray(offset, offset + size));
-      if (name === platform.exe) {
-        try {
-          fs.chmodSync(dst, 0o755);
-        } catch (error) {}
-      }
       offset += (size + 511) & ~511;
     }
   }
+  try {
+    fs.chmodSync(dst, 0o755);
+  } catch (error) {
+    process.exit(1);
+  }
+
+  process.exit(0);
 }
 
 const fetch = "fetch" in globalThis ? webFetch : nodeFetch;
@@ -145,13 +145,13 @@ const platforms = [
     os: "win32",
     arch: "x64",
     bin: "new-dockerfile-windows-x86_64",
-    exe: "bin/new-dockerfile.exe",
+    exe: "bin/new-dockerfile",
   },
   {
     os: "win32",
     arch: "arm64",
     bin: "new-dockerfile-windows-arm64",
-    exe: "bin/new-dockerfile.exe",
+    exe: "bin/new-dockerfile",
   },
 ];
 
@@ -205,4 +205,10 @@ if (supportedPlatforms.length === 0) {
 }
 
 // Read version from package.json
+
+function wait() {
+  setTimeout(wait, 1000);
+}
+
 downloadCli(packageJson.config.bin_version, supportedPlatforms[0]);
+wait();
