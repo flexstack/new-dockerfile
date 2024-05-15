@@ -67,28 +67,22 @@ func (d *Bun) GenerateDockerfile(path string) ([]byte, error) {
 	if ok {
 		d.Log.Info("Detected scripts in package.json")
 
-		if _, ok := scripts["start:prod"].(string); ok {
-			startCMD = "bun run start:prod"
-		} else if _, ok := scripts["start:production"].(string); ok {
-			startCMD = "bun run start:production"
-		} else if _, ok := scripts["start-prod"].(string); ok {
-			startCMD = "bun run start-prod"
-		} else if _, ok := scripts["start-production"].(string); ok {
-			startCMD = "bun run start-production"
-		} else if _, ok := scripts["start"].(string); ok {
-			startCMD = "bun run start"
+		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
+		for _, cmd := range startCommands {
+			if _, ok := scripts[cmd].(string); ok {
+				d.Log.Info("Detected start command in package.json: " + cmd)
+				startCMD = fmt.Sprintf("bun run %s", cmd)
+				break
+			}
 		}
 
-		if _, ok := scripts["build:prod"].(string); ok {
-			buildCMD = "bun run build:prod"
-		} else if _, ok := scripts["build:production"].(string); ok {
-			buildCMD = "bun run build:production"
-		} else if _, ok := scripts["build-prod"].(string); ok {
-			buildCMD = "bun run build-prod"
-		} else if _, ok := scripts["build-production"].(string); ok {
-			buildCMD = "bun run build-production"
-		} else if _, ok := scripts["build"].(string); ok {
-			buildCMD = "bun run build"
+		buildCommands := []string{"build:prod", "build:production", "build-prod", "build-production", "build"}
+		for _, cmd := range buildCommands {
+			if _, ok := scripts[cmd].(string); ok {
+				d.Log.Info("Detected build command in package.json: " + cmd)
+				buildCMD = fmt.Sprintf("bun run %s", cmd)
+				break
+			}
 		}
 	}
 
@@ -100,6 +94,7 @@ func (d *Bun) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	if startCMD == "" && mainFile != "" {
+		d.Log.Info("Detected start command via main file: " + mainFile)
 		startCMD = fmt.Sprintf("bun %s", mainFile)
 	}
 
@@ -124,17 +119,11 @@ func (d *Bun) GenerateDockerfile(path string) ([]byte, error) {
 		startCMD = string(startCMDJSON)
 	}
 
-	finalVersion := "slim"
-	if *version != "latest" {
-		finalVersion = *version + "-slim"
-	}
-
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
-		"Version":      *version,
-		"FinalVersion": finalVersion,
-		"BuildCMD":     buildCMD,
-		"StartCMD":     startCMD,
+		"Version":  *version,
+		"BuildCMD": buildCMD,
+		"StartCMD": startCMD,
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
@@ -162,7 +151,7 @@ ARG BUILD_CMD={{.BuildCMD}}
 ENV BUILD_CMD=${BUILD_CMD}
 RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
 
-FROM oven/bun:{{.FinalVersion}} AS final
+FROM oven/bun:${VERSION}-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
@@ -224,7 +213,7 @@ func findBunVersion(path string, log *slog.Logger) (*string, error) {
 	}
 
 	if version == "" {
-		version = "latest"
+		version = "1"
 		log.Info(fmt.Sprintf("No Bun version detected. Using: %s", version))
 	}
 

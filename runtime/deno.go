@@ -26,6 +26,8 @@ func (d *Deno) Match(path string) bool {
 		filepath.Join(path, "deno.json"),
 		filepath.Join(path, "deno.jsonc"),
 		filepath.Join(path, "deno.lock"),
+		filepath.Join(path, "deps.ts"),
+		filepath.Join(path, "mod.ts"),
 	}
 
 	for _, p := range checkPaths {
@@ -97,16 +99,17 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 
 	scripts, ok := denoJSON["tasks"].(map[string]interface{})
 	if ok {
-		d.Log.Info("Detected tasks in deno.json")
-		startCommands := []string{"start:prod", "start:production", "start-prod", "start-production", "start"}
+		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
 		for _, cmd := range startCommands {
 			if _, ok := scripts[cmd].(string); ok {
+				d.Log.Info("Detected start command in deno.json: " + cmd)
 				startCMD = fmt.Sprintf("deno task %s", cmd)
 				break
 			}
 		}
 
 		if _, ok := scripts["cache"].(string); ok {
+			d.Log.Info("Detected install command in deno.json: cache")
 			installCMD = "deno task cache"
 		}
 	}
@@ -115,8 +118,11 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 		mainFiles := []string{"mod.ts", "src/mod.ts", "main.ts", "src/main.ts", "index.ts", "src/index.ts"}
 		for _, mainFile := range mainFiles {
 			if _, err := os.Stat(filepath.Join(path, mainFile)); err == nil {
+				d.Log.Info("Detected start command via main/mod file: " + mainFile)
+
 				startCMD = fmt.Sprintf("deno run --allow-all %s", mainFile)
 				if installCMD == "" {
+					d.Log.Info("Detected install command via main/mod file: " + mainFile)
 					installCMD = "deno cache " + mainFile
 				}
 				break

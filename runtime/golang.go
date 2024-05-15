@@ -103,7 +103,7 @@ ARG TARGETARCH=arm64
 ARG CGO_ENABLED=0
 
 COPY . .
-RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go mod download
+RUN if [ -f go.mod ]; then go mod download; fi
 
 # -trimpath removes the absolute path to the source code in the binary
 # -ldflags="-s -w" removes the symbol table and debug information from the binary
