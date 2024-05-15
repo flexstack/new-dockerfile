@@ -1,0 +1,8 @@
+{
+  "module": "index.ts",
+  "scripts": {
+    "build:prod": "NODE_ENV=production bun build",
+    "build": "bun build",
+    "start:production": "bun index.ts"
+  }
+}

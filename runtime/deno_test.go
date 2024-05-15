@@ -8,7 +8,7 @@ import (
 	"github.com/flexstack/new-dockerfile/runtime"
 )
 
-func TestRuntimeMatch(t *testing.T) {
+func TestDenoMatch(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
@@ -41,7 +41,7 @@ func TestRuntimeMatch(t *testing.T) {
 	}
 }
 
-func TestRuntimeGenerateDockerfile(t *testing.T) {
+func TestDenoGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
