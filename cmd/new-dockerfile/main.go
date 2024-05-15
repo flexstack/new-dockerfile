@@ -18,7 +18,7 @@ func main() {
 	var path string
 	flag.StringVar(&path, "path", ".", "Path to the project directory")
 	var noColor bool
-	flag.BoolVar(&noColor, "no-color", false, "Disable colorized output")
+	flag.BoolVar(&noColor, "no-color", os.Getenv("NO_COLOR") == "true" || os.Getenv("ANSI_COLORS_DISABLED") == "true", "Disable colorized output")
 	var runtimeArg string
 	flag.StringVar(&runtimeArg, "runtime", "", "Force a specific runtime")
 	var quiet bool
