@@ -529,15 +529,15 @@ Determined by the binary name in the `Cargo.toml` file
 
 ---
 
-## Contributing
-
-Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide to learn how to contribute to this project.
-
 ## Used By
 
 - [FlexStack](https://flexstack.com) - A platform that simplifies the deployment of containerized applications to AWS. 
   FlexStack uses this tool to automatically detect the runtime and framework used by your project, so you can just bring your code and deploy it with confidence.
 - *Your project here* - If you're using this tool in your project, let us know! We'd love to feature you here.
+
+## Contributing
+
+Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide to learn how to contribute to this project.
 
 ## License
 
