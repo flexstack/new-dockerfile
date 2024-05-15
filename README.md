@@ -372,9 +372,80 @@ In order of precedence:
 
 ### PHP
 
+[PHP](https://www.php.net/) is a popular general-purpose scripting language that is especially suited to web development.
+
+#### Detected Files
+  - `composer.json`
+  - `index.php`
+
+#### Version Detection
+  - `.tool-versions` - `php {VERSION}`
+  - `composer.json` - `"php": "{VERSION}"`
+
+#### Runtime Image
+`php:${VERSION}-apache`
+
+#### Build Args
+  - `VERSION` - The version of PHP to install (default: `8.3`)
+  - `INSTALL_CMD` - The command to install dependencies (default: detected via source code)
+  - `BUILD_CMD` - The command to build the project (default: detected via source code)
+  - `START_CMD` - The command to start the project (default: `apache2-foreground`)
+
+#### Install Command
+- If Composer: `composer update && composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction`
+- If `package.json` exists: composer install command + see Node.js install command
+
+#### Build Command
+- If `package.json` exists: see Node.js build command
+
+#### Start Command
+`apache2-foreground`
+
 ---
 
 ### Python
+
+[Python](https://www.python.org/) is a high-level, interpreted programming language that is known for its readability and simplicity.
+
+#### Detected Files
+  - `requirements.txt`
+  - `poetry.lock`
+  - `Pipefile.lock`
+  - `pyproject.toml`
+  - `pdm.lock`
+  - `main.py`
+  - `app.py`
+  - `application.py`
+  - `app/__init__.py`
+  - `filepath.Join(filepath.Base(path), "app.py")`
+  - `filepath.Join(filepath.Base(path), "application.py")`
+  - `filepath.Join(filepath.Base(path), "main.py")`
+  - `filepath.Join(filepath.Base(path), "__init__.py")`
+
+#### Version Detection
+  - `.tool-versions` - `python {VERSION}`
+  - `.python-version` - `{VERSION}`
+  - `runtime.txt` - `python-{VERSION}`
+
+#### Runtime Image
+`python:${VERSION}-slim`
+
+#### Build Args
+  - `VERSION` - The version of Python to install (default: `3.10`)
+  - `INSTALL_CMD` - The command to install dependencies (default: detected from source code)
+  - `START_CMD` - The command to start the project (default: detected from source code)
+
+#### Install Command
+- If Poetry: `poetry install --no-dev --no-interactive --no-ansi`
+- If Pipenv: `PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy`
+- If PDM: `pdm install --prod`
+- If `pyproject.toml` exists: `pip install --upgrade build setuptools && pip install .`
+- If `requirements.txt` exists: `pip install -r requirements.txt`
+
+#### Start Command
+- If Django is detected: `python manage.py runserver 0.0.0.0:${PORT}`
+- If `pyproject.toml` exists: `python -m ${projectName}`
+- Otherwise: `python [main.py, app.py, application.py, app/main.py, app/application.py, app/__init__.py]`
 
 ---
 
