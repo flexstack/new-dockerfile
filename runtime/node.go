@@ -164,7 +164,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-var startScriptRe = regexp.MustCompile(`^.*?\bnode(mon)?\b.*?(index|main|server|client)\.([cm]?js)\b`)
+var startScriptRe = regexp.MustCompile(`^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`)
 
 var nodeTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}

@@ -369,7 +369,7 @@ In order of precedence:
 #### Start Command
 In order of precedence:
   - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
-  - `package.json` scripts search for regex matching: `^.*?\bnode(mon)?\b.*?(index|main|server|client)\.([cm]?js)\b`
+  - `package.json` scripts search for regex matching: `^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`
   - `package.json` main/module file: `node ${mainFile}`
 
 ---
