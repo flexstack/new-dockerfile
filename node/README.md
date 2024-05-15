@@ -4,6 +4,8 @@
 based on your project source code. It supports a wide range of languages and frameworks, including Next.js, 
 Node.js, Python, Ruby, Java/Spring Boot, Go, Elixir/Phoenix, and more.
 
+See the [GitHub Repository](https://github.com/flexstack/new-dockerfile#readme) for full runtime documentation. 
+
 See the [FlexStack Documentation](https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile) page for FlexStack-specific documentation
 related to this tool.
 
