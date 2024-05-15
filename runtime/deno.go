@@ -26,6 +26,8 @@ func (d *Deno) Match(path string) bool {
 		filepath.Join(path, "deno.json"),
 		filepath.Join(path, "deno.jsonc"),
 		filepath.Join(path, "deno.lock"),
+		filepath.Join(path, "deps.ts"),
+		filepath.Join(path, "mod.ts"),
 	}
 
 	for _, p := range checkPaths {

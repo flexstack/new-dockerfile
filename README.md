@@ -21,19 +21,18 @@ related to this tool.
 
 ## Supported Runtimes
 
-- Bun
-- Deno
-- Docker
-- Elixir
-- Go
-- Java
-- Next.js
-- Node.js
-- PHP
-- Python
-- Ruby
-- Rust
-- Static (HTML, CSS, JS)
+- [Bun](#bun)
+- [Deno](#deno))
+- [Elixir](#elixir)
+- [Go](#go)
+- [Java](#java)
+- [Next.js](#nextjs)
+- [Node.js](#nodejs)
+- [PHP](#php)
+- [Python](#python)
+- [Ruby](#ruby)
+- [Rust](#rust)
+- [Static](#static-html-css-js) (HTML, CSS, JS)
 
 ### Additional runtimes we'd like to support
 
@@ -118,11 +117,14 @@ Read on to see runtime-specific examples and how to configure the generated Dock
   - `bun.lockb`
   - `bunfig.toml`
 
+#### Version Detection
+  - `.tool-versions` - `bun {VERSION}`
+
 #### Runtime Image
 `oven/bun:${VERSION}-slim`
 
 #### Build Args
-  - `VERSION` - The version of Bun to install (default: `latest`)
+  - `VERSION` - The version of Bun to install (default: `1`)
   - `INSTALL_CMD` - The command to install dependencies (default: `bun install`)
   - `BUILD_CMD` - The command to build the project (default: detected from `package.json`)
   - `START_CMD` - The command to start the project (default: detected from `package.json`)
@@ -138,18 +140,83 @@ Detected in order of precedence:
   - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
   - `package.json` main/module file: `bun run ${mainFile}`
 
+---
+
 ### Deno
-### Docker
+
+[Deno](https://deno.com/) is a secure runtime for JavaScript with native TypeScript and JSX support
+
+#### Detected Files
+  - `deno.jsonc`
+  - `deno.json`
+  - `deno.lock`
+  - `deps.ts`
+  - `mod.ts`
+
+#### Version Detection
+  - `.tool-versions` - `deno {VERSION}`
+
+#### Runtime Image
+`debian:stable-slim`
+
+#### Build Args
+  - `VERSION` - The version of Deno to install (default: `latest`)
+  - `INSTALL_CMD` - The command to install dependencies (default: detected from `deno.jsonc` and source code)
+  - `START_CMD` - The command to start the project (default: detected from `deno.jsonc` and source code)
+
+#### Install Command
+
+Detected in order of precedence:
+  - `deno.jsonc` tasks: `"cache"`
+  - Main/module file: `deno cache ["mod.ts", "src/mod.ts", "main.ts", "src/main.ts", "index.ts", "src/index.ts]"`
+
+#### Start Command
+
+Detected in order of precedence:
+  - `deno.jsonc` tasks: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - Main/module file: `deno run ["mod.ts", "src/mod.ts", "main.ts", "src/main.ts", "index.ts", "src/index.ts]"`
+  
+---
+
 ### Elixir
+
+---
+
 ### Go
+
+---
+
 ### Java
+
+---
+
 ### Next.js
+
+---
+
 ### Node.js
+
+---
+
 ### PHP
+
+---
+
 ### Python
+
+---
+
 ### Ruby
+
+---
+
 ### Rust
+
+---
+
 ### Static (HTML, CSS, JS)
+
+---
 
 ## Contributing
 
