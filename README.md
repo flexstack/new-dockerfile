@@ -512,7 +512,8 @@ Determined by the binary name in the `Cargo.toml` file
 
 ### Static (HTML, CSS, JS)
 
-[Static Web Server](https://static-web-server.net/) is a cross-platform, high-performance & asynchronous web server for static files serving
+[Static Web Server](https://static-web-server.net/) is a cross-platform, high-performance & asynchronous web server for static files serving.
+It is nearly as fast as Nginx and Lighttpd, but is [easily configurable with environment variables](https://static-web-server.net/configuration/environment-variables/).
 
 #### Detected Files
   - `public/`
