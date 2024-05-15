@@ -334,6 +334,40 @@ fi
 
 ### Node.js
 
+[Node.js](https://nodejs.org/) is a JavaScript runtime built on Chrome's V8 JavaScript engine.
+
+#### Detected Files
+  - `yarn.lock`
+  - `package-lock.json`
+  - `pnpm-lock.yaml`
+
+#### Version Detection
+  - `.tool-versions` - `nodejs {VERSION}`
+
+#### Runtime Image
+`node:${VERSION}-slim`
+
+#### Build Args
+  - `VERSION` - The version of Node.js to install (default: `lts`)
+  - `INSTALL_CMD` - The command to install dependencies (default: detected from source code)
+  - `BUILD_CMD` - The command to build the project (default: detected from source code)
+  - `START_CMD` - The command to start the project (default: detected from source code)
+
+#### Install Command
+- If Yarn: `yarn --frozen-lockfile`
+- If npm: `npm ci`
+- If pnpm: `corepack enable pnpm && pnpm i --frozen-lockfile`
+
+#### Build Command
+In order of precedence:
+  - `package.json` scripts: `"build:prod", "build:production", "build-prod", "build-production", "build"`
+
+#### Start Command
+In order of precedence:
+  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - `package.json` scripts search for regex matching: `^.*?\bnode(mon)?\b.*?(index|main|server|client)\.js\b`
+  - `package.json` main/module file: `node ${mainFile}`
+
 ---
 
 ### PHP
