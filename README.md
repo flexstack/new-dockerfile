@@ -14,12 +14,6 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 curl -sSL https://flexstack.com/install/new-dockerfile | sh
 ```
 
-### Go Binary
-
-```sh
-go install github.com/flexstack/new-dockerfile@latest
-```
-
 ### Go Package
 
 ```sh
