@@ -13,12 +13,13 @@ related to this tool.
 
 - [x] Automatically detect the runtime and framework used by your project
 - [x] Use version managers like [asdf](https://github.com/asdf-vm), nvm, rbenv, and pyenv to install the correct version of the runtime
-- [x] Make a best effort to detect any install, build, and run commands
+- [x] Make a best effort to detect any install, build, and start commands
 - [x] Generate a Dockerfile with sensible defaults that are configurable via [Docker Build Args](https://docs.docker.com/build/guide/build-args/)
 - [x] Support for a wide range of the most popular languages and frameworks including Next.js, Phoenix, Spring Boot, Django, and more
 - [x] Use Debian Slim as the runtime image for a smaller image size and better security, while still supporting the most common dependencies and avoiding deployment headaches caused by Alpine Linux gotchas
 - [x] Includes `wget` in the runtime image for adding health checks to services, e.g. `wget -nv -t1 --spider 'http://localhost:8080/healthz' || exit 1`
 - [x] Use multi-stage builds to reduce the size of the final image
+- [x] Run the application as a non-root user for better security
 - [x] Supports multi-platform images that run on both x86 and ARM CPU architectures
 
 ## Supported Runtimes
@@ -93,8 +94,8 @@ For example, if it finds a `package.json` file, it will assume the project is a 
 a `next.config.js` file is present, in which case it will assume the project is a Next.js project.
 
 From there, it will read any `.tool-versions` or other version manager files to determine the correct version
-of the runtime to install. It will then make a best effort to detect any install, build, and run commands.
-For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the run command.
+of the runtime to install. It will then make a best effort to detect any install, build, and start commands.
+For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the start command.
 
 Runtimes are matched against in the order they appear when you run `new-dockerfile --runtime list`.
 
