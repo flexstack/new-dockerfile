@@ -1,6 +1,8 @@
 module github.com/flexstack/new-dockerfile
 
-go 1.22.3
+go 1.21
+
+toolchain go1.22.3
 
 require (
 	github.com/lmittmann/tint v1.0.4
