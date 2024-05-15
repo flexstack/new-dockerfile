@@ -59,9 +59,9 @@ func (a *Dockerfile) ListRuntimes() []runtime.Runtime {
 		&runtime.PHP{Log: a.log},
 		&runtime.Java{Log: a.log},
 		&runtime.Elixir{Log: a.log},
+		&runtime.NextJS{Log: a.log},
 		&runtime.Deno{Log: a.log},
 		&runtime.Bun{Log: a.log},
-		&runtime.NextJS{Log: a.log},
 		&runtime.Node{Log: a.log},
 		&runtime.Static{Log: a.log},
 	}

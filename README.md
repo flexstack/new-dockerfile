@@ -1,10 +1,11 @@
 # Autogenerate a Dockerfile
 
-FlexStack's `new-dockerfile` CLI tool and Go package automatically generates a configurable Dockerfile 
+`new-dockerfile` is a CLI tool and Go package automatically generates a configurable Dockerfile 
 based on your project source code. It supports a wide range of languages and frameworks, including Next.js, 
 Node.js, Python, Ruby, Java/Spring Boot, Go, Elixir/Phoenix, and more.
 
-For detailed documentation, visit the [FlexStack Documentation](https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile) page.
+See the [FlexStack Documentation](https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile) page for FlexStack-specific documentation
+related to this tool.
 
 ## Features
 
@@ -14,6 +15,7 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 - [x] Generate a Dockerfile with sensible defaults that are configurable via [Docker Build Args](https://docs.docker.com/build/guide/build-args/)
 - [x] Support for a wide range of the most popular languages and frameworks including Next.js, Phoenix, Spring Boot, Django, and more
 - [x] Use Debian Slim as the runtime image for a smaller image size and better security, while still supporting the most common dependencies and avoiding deployment headaches caused by Alpine Linux gotchas
+- [x] Includes `wget` in the runtime image for adding health checks to services, e.g. `wget -nv -t1 --spider 'http://localhost:8080/healthz' || exit 1`
 - [x] Use multi-stage builds to reduce the size of the final image
 - [x] Supports multi-platform images that run on both x86 and ARM CPU architectures
 
@@ -40,7 +42,7 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 - Scala
 - Zig
 
-[Consider contributing](CONTRIBUTING.md) to add support for these runtimes!
+[Consider contributing](CONTRIBUTING.md) to add support for these or any other runtimes!
 
 ## Installation
 
@@ -102,7 +104,52 @@ From there, it will read any `.tool-versions` or other version manager files to 
 of the runtime to install. It will then make a best effort to detect any install, build, and run commands.
 For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the run command.
 
+Runtimes are matched against in the order they appear when you run `new-dockerfile --runtime list`.
+
 Read on to see runtime-specific examples and how to configure the generated Dockerfile.
+
+## Runtime Documentation
+
+### Bun
+
+[Bun](https://bun.sh/) is a fast JavaScript all-in-one toolkit
+
+#### Detected Files
+  - `bun.lockb`
+  - `bunfig.toml`
+
+#### Runtime Image
+`oven/bun:${VERSION}-slim`
+
+#### Build Args
+  - `VERSION` - The version of Bun to install (default: `latest`)
+  - `INSTALL_CMD` - The command to install dependencies (default: `bun install`)
+  - `BUILD_CMD` - The command to build the project (default: detected from `package.json`)
+  - `START_CMD` - The command to start the project (default: detected from `package.json`)
+
+#### Build Command
+
+Detected in order of precedence:
+  - `package.json` scripts: `"build:prod", "build:production", "build-prod", "build-production", "build"`
+
+#### Start Command
+
+Detected in order of precedence:
+  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - `package.json` main/module file: `bun run ${mainFile}`
+
+### Deno
+### Docker
+### Elixir
+### Go
+### Java
+### Next.js
+### Node.js
+### PHP
+### Python
+### Ruby
+### Rust
+### Static (HTML, CSS, JS)
 
 ## Contributing
 
@@ -113,3 +160,7 @@ Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide to learn how to contribute to 
 - [FlexStack](https://flexstack.com) - A platform that simplifies the deployment of containerized applications to AWS. 
   FlexStack uses this tool to automatically detect the runtime and framework used by your project, so you can just bring your code and deploy it with confidence.
 - *Your project here* - If you're using this tool in your project, let us know! We'd love to feature you here.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
