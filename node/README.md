@@ -1,4 +1,4 @@
-# Autogenerate a Dockerfile from your project source code
+# Autogenerate a Dockerfile
 
 FlexStack's `new-dockerfile` CLI tool automatically generates a configurable Dockerfile based on your project source code. 
 It supports a wide range of languages and frameworks, including Next.js, Node.js, Python, Ruby, Java/Spring Boot, Go, 
@@ -14,7 +14,7 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 
 ## Usage
 
-```bash
+```sh
 npx new-dockerfile [options]
 ```
 

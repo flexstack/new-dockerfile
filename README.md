@@ -10,19 +10,19 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 
 ### cURL
 
-```bash
+```sh
 curl -sSL https://flexstack.com/install/new-dockerfile | sh
 ```
 
 ### Go Binary
 
-```bash
+```sh
 go install github.com/flexstack/new-dockerfile@latest
 ```
 
 ### Go Package
 
-```bash
+```sh
 go get github.com/flexstack/new-dockerfile
 ```
 
@@ -34,7 +34,7 @@ go get github.com/flexstack/new-dockerfile
 
 ## CLI Usage
 
-```bash
+```sh
 new-dockerfile [options]
 ```
 
