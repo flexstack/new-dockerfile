@@ -105,16 +105,15 @@ ARG CGO_ENABLED=0
 COPY . .
 RUN if [ -f go.mod ]; then go mod download; fi
 
-# -trimpath removes the absolute path to the source code in the binary
-# -ldflags="-s -w" removes the symbol table and debug information from the binary
-# CGO_ENABLED=0 disables the use of cgo
 FROM base AS build
 WORKDIR /go/src/app
 ARG TARGETOS=linux
 ARG TARGETARCH=arm64
 ARG CGO_ENABLED=0
 ARG PACKAGE={{.Package}}
-
+# -trimpath removes the absolute path to the source code in the binary
+# -ldflags="-s -w" removes the symbol table and debug information from the binary
+# CGO_ENABLED=0 disables the use of cgo
 RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /go/bin/app "${PACKAGE}"
 
 FROM debian:stable-slim

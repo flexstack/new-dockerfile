@@ -89,6 +89,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 		for _, cmd := range startCommands {
 			if _, ok := scripts[cmd].(string); ok {
 				startCMD = fmt.Sprintf("%s run %s", packageManager, cmd)
+				d.Log.Info("Detected start command in package.json: " + startCMD)
 				break
 			}
 		}
@@ -99,6 +100,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 
 				if ok && startScriptRe.MatchString(value) {
 					startCMD = fmt.Sprintf("%s run %s", packageManager, name)
+					d.Log.Info("Detected start command in package.json via regex pattern: " + startCMD)
 					break
 				}
 			}
@@ -108,6 +110,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 		for _, cmd := range buildCommands {
 			if _, ok := scripts[cmd].(string); ok {
 				buildCMD = fmt.Sprintf("%s run %s", packageManager, cmd)
+				d.Log.Info("Detected build command in package.json: " + buildCMD)
 				break
 			}
 		}

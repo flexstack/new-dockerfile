@@ -52,7 +52,7 @@ func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	BinName, err := findBinName(path)
+	binName, err := findBinName(path)
 	if err != nil {
 		return nil, err
 	}
@@ -64,14 +64,14 @@ func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
   Binary name    : %s
 
   Docker build arguments can supersede these defaults if provided.
-  See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *elixirVersion, *otpVersion, BinName),
+  See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *elixirVersion, *otpVersion, binName),
 	)
 
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
 		"ElixirVersion": *elixirVersion,
 		"OTPVersion":    strings.Split(*otpVersion, ".")[0],
-		"BinName":       BinName,
+		"BinName":       binName,
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}

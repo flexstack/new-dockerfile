@@ -68,11 +68,13 @@ func (d *Rust) GenerateDockerfile(path string) ([]byte, error) {
 			if bin == "bin" {
 				if pkgs, ok := cargoTOML[bin].([]map[string]interface{}); ok {
 					if len(pkgs) > 0 {
+						d.Log.Info("Detected binary in Cargo.toml via [[bin]]")
 						pkg = pkgs[0]
 						break
 					}
 				}
 			} else if pkg, ok = cargoTOML[bin].(map[string]interface{}); ok {
+				d.Log.Info("Detected binary in Cargo.toml via [" + bin + "]")
 				break
 			}
 		}

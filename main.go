@@ -80,4 +80,5 @@ func (a *Dockerfile) MatchRuntime(path string) (runtime.Runtime, error) {
 	return nil, ErrRuntimeNotFound
 }
 
+// Error returned when we could not auto-detect the runtime of the project.
 var ErrRuntimeNotFound = fmt.Errorf("A Dockerfile was not detected in the project and we could not auto-generate one for you.")

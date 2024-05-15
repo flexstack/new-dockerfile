@@ -64,14 +64,19 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 
 	installCMD := ""
 	if _, err := os.Stat(filepath.Join(path, "requirements.txt")); err == nil {
+		d.Log.Info("Detected requirements.txt file")
 		installCMD = "pip install -r requirements.txt"
 	} else if _, err := os.Stat(filepath.Join(path, "poetry.lock")); err == nil {
+		d.Log.Info("Detected a poetry project")
 		installCMD = "poetry install --no-dev --no-interactive --no-ansi"
 	} else if _, err := os.Stat(filepath.Join(path, "Pipfile.lock")); err == nil {
+		d.Log.Info("Detected a pipenv project")
 		installCMD = "PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"
 	} else if _, err := os.Stat(filepath.Join(path, "pdm.lock")); err == nil {
+		d.Log.Info("Detected a pdm project")
 		installCMD = "pdm install --prod"
 	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
+		d.Log.Info("Detected a pyproject.toml file")
 		installCMD = "pip install --upgrade build setuptools && pip install ."
 	}
 
@@ -99,9 +104,14 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 				}
 			}
 
-			startCMD = fmt.Sprintf(`python -m %s`, projectName)
+			if projectName != "" {
+				startCMD = fmt.Sprintf(`python -m %s`, projectName)
+				d.Log.Info("Detected start command via pyproject.toml")
+			}
 		}
-	} else {
+	}
+
+	if startCMD == "" {
 		mainFiles := []string{
 			"main.py",
 			"app.py",
@@ -121,6 +131,7 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 			}
 
 			startCMD = fmt.Sprintf(`python %s`, fn)
+			d.Log.Info("Detected start command via main file: " + startCMD)
 			break
 		}
 	}

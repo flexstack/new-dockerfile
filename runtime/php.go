@@ -53,6 +53,7 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 	startCMD := "apache2-foreground"
 	installCMD := ""
 	if _, err := os.Stat(filepath.Join(path, "composer.json")); err == nil {
+		d.Log.Info("Detected composer.json file")
 		installCMD = "composer update && composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction"
 	}
 
@@ -73,6 +74,7 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	if npmInstallCMD != "" {
+		d.Log.Info("Detected package-lock.json, pnpm-lock.yaml, yarn.lock or bun.lockb file")
 		if installCMD == "" {
 			installCMD = npmInstallCMD
 		} else {
@@ -101,6 +103,7 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 			for _, cmd := range buildCommands {
 				if _, ok := scripts[cmd].(string); ok {
 					buildCMD = fmt.Sprintf("%s run %s", packageManager, cmd)
+					d.Log.Info("Detected build command in package.json: " + buildCMD)
 					break
 				}
 			}

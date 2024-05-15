@@ -69,10 +69,15 @@ func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
 		installCMD = installCMD + " && bun install"
 	}
 
+	if packageManager != "" {
+		d.Log.Info("Detected Node.js package manager: " + packageManager)
+	}
+
 	isRails := isRailsProject(path)
 	buildCMD := ""
 	startCMD := ""
 	if isRails {
+		d.Log.Info("Detected Rails project")
 		buildCMD = "bundle exec rake assets:precompile"
 		startCMD = "bundle exec rails server -b 0.0.0.0 -p ${PORT}"
 	} else {
@@ -86,10 +91,13 @@ func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
 
 			switch fn {
 			case "config.ru":
+				d.Log.Info("Detected Rack project")
 				startCMD = "bundle exec rackup config.ru -p ${PORT}"
 			case "config/environment.rb":
+				d.Log.Info("Detected Rails project")
 				startCMD = "bundle exec ruby script/server"
 			case "Rakefile":
+				d.Log.Info("Detected Rake project")
 				startCMD = "bundle exec rake"
 			}
 
