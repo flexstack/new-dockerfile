@@ -57,18 +57,27 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	packageManager := ""
+	npmInstallCMD := ""
 	if _, err := os.Stat(filepath.Join(path, "package-lock.json")); err == nil {
 		packageManager = "npm"
-		installCMD = installCMD + " && npm ci"
+		npmInstallCMD = "npm ci"
 	} else if _, err := os.Stat(filepath.Join(path, "pnpm-lock.yaml")); err == nil {
 		packageManager = "pnpm"
-		installCMD = installCMD + " && corepack enable pnpm && pnpm i --frozen-lockfile"
+		npmInstallCMD = "corepack enable pnpm && pnpm i --frozen-lockfile"
 	} else if _, err := os.Stat(filepath.Join(path, "yarn.lock")); err == nil {
 		packageManager = "yarn"
-		installCMD = installCMD + " && yarn --frozen-lockfile"
+		npmInstallCMD = "yarn --frozen-lockfile"
 	} else if _, err := os.Stat(filepath.Join(path, "bun.lockb")); err == nil {
 		packageManager = "bun"
-		installCMD = installCMD + " && bun install"
+		npmInstallCMD = "bun install"
+	}
+
+	if npmInstallCMD != "" {
+		if installCMD == "" {
+			installCMD = npmInstallCMD
+		} else {
+			installCMD = fmt.Sprintf("%s && %s", installCMD, npmInstallCMD)
+		}
 	}
 
 	buildCMD := ""

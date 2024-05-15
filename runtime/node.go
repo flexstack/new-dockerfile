@@ -246,6 +246,10 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 						version = strings.TrimPrefix(line, "v")
 						log.Info("Detected Node version in " + file + ": " + version)
 						break
+					} else {
+						version = line
+						log.Info("Detected Node version in " + file + ": " + version)
+						break
 					}
 				}
 

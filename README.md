@@ -300,8 +300,8 @@ Maven version:
 
 #### Version Detection
   - `.tool-versions` - `nodejs {VERSION}`
-  - `.nvmrc` - `{VERSION}`
-  - `.node-version` - `{VERSION}`
+  - `.nvmrc` - `v{VERSION}`
+  - `.node-version` - `v{VERSION}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
