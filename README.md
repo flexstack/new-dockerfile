@@ -300,6 +300,8 @@ Maven version:
 
 #### Version Detection
   - `.tool-versions` - `nodejs {VERSION}`
+  - `.nvmrc` - `{VERSION}`
+  - `.node-version` - `{VERSION}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
@@ -343,6 +345,8 @@ fi
 
 #### Version Detection
   - `.tool-versions` - `nodejs {VERSION}`
+  - `.nvmrc` - `v{VERSION}`
+  - `.node-version` - `v{VERSION}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
@@ -365,7 +369,7 @@ In order of precedence:
 #### Start Command
 In order of precedence:
   - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
-  - `package.json` scripts search for regex matching: `^.*?\bnode(mon)?\b.*?(index|main|server|client)\.js\b`
+  - `package.json` scripts search for regex matching: `^.*?\bnode(mon)?\b.*?(index|main|server|client)\.([cm]?js)\b`
   - `package.json` main/module file: `node ${mainFile}`
 
 ---
