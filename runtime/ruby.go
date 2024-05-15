@@ -217,8 +217,23 @@ func findRubyVersion(path string, log *slog.Logger) (*string, error) {
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
 					line := scanner.Text()
-					if strings.Contains(line, "ruby") {
-						version = strings.Split(line, "'")[1]
+					if strings.HasPrefix(line, "ruby") {
+						v := strings.Split(line, "'")
+						if len(v) < 2 {
+							v = strings.Split(line, "\"")
+						}
+						ruby := v[1]
+						if gteVersionRe.MatchString(ruby) {
+							version = gteVersionRe.FindStringSubmatch(ruby)[1]
+						} else if rangeVersionRe.MatchString(ruby) {
+							version = rangeVersionRe.FindStringSubmatch(ruby)[2]
+						} else if tildeVersionRe.MatchString(ruby) {
+							version = tildeVersionRe.FindStringSubmatch(ruby)[1]
+						} else if caretVersionRe.MatchString(ruby) {
+							version = caretVersionRe.FindStringSubmatch(ruby)[1]
+						} else if exactVersionRe.MatchString(ruby) {
+							version = ruby
+						}
 						log.Info("Detected Ruby version from Gemfile: " + version)
 						break
 					}
@@ -258,7 +273,7 @@ func isRailsProject(path string) bool {
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := scanner.Text()
-			if strings.Contains(line, "gem 'rails'") {
+			if strings.HasPrefix(line, "gem 'rails'") || strings.HasPrefix(line, "gem \"rails\"") {
 				return true
 			}
 		}
