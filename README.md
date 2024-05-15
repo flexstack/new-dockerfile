@@ -252,15 +252,11 @@ Detected in order of precedence:
 [Java](https://www.java.com/) is a class-based, object-oriented programming language that is designed to have as few implementation dependencies as possible.
 
 #### Detected Files
-  - `build.gradle`
-  - `gradlew`
   - `pom.{xml,atom,clj,groovy,rb,scala,yml,yaml}`
 
 #### Version Detection
 JDK version:
   - `.tool-versions` - `java {VERSION}`
-Gradle version:
-  - `.tool-versions` - `gradle {VERSION}`
 Maven version:
   - `.tool-versions` - `maven {VERSION}`
 
@@ -269,7 +265,6 @@ Maven version:
 
 #### Build Args
   - `VERSION` - The version of the JDK to install (default: `17`)
-  - `GRADLE_VERSION` - The version of Gradle to install (default: `8`)
   - `MAVEN_VERSION` - The version of Maven to install (default: `3`)
   - `JAVA_OPTS` - The Java options to pass to the JVM (default: `-Xmx512m -Xms256m`)
   - `BUILD_CMD` - The command to build the project (default: best guess via source code)
@@ -280,13 +275,10 @@ Maven version:
 
 #### Build Command
 - If Maven: `mvn -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install`
-- If Gradle: `./gradlew clean build -x check -x test`
 
 #### Start Command
 - Default: `java $JAVA_OPTS -jar target/*jar`
-- If Gradle: `java $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
 - If Spring Boot: `java -Dserver.port=${PORT} $JAVA_OPTS -jar target/*jar`
-- If Spring Boot w/ Gradle: `java -Dserver.port=${PORT} $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
 
 ---
 
