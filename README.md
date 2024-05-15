@@ -508,6 +508,12 @@ In order of precedence:
   - `TARGETARCH` - The target architecture for the build (default: `amd64`)
   - `BIN_NAME` - The name of the release binary (default: detected via `Cargo.toml`)
 
+#### Build Command
+```sh 
+if [ "${TARGETARCH}" = "amd64" ]; then rustup target add x86_64-unknown-linux-gnu; else rustup target add aarch64-unknown-linux-gnu; fi
+if [ "${TARGETARCH}" = "amd64" ]; then cargo zigbuild --release --target x86_64-unknown-linux-gnu; else cargo zigbuild --release --target aarch64-unknown-linux-gnu; fi
+```
+
 #### Start Command
 Determined by the binary name in the `Cargo.toml` file
 - `["/app/app"]`
