@@ -33,6 +33,15 @@ For detailed documentation, visit the [FlexStack Documentation](https://flexstac
 - Rust
 - Static (HTML, CSS, JS)
 
+### Additional runtimes we'd like to support
+
+- C#/.NET
+- C++
+- Scala
+- Zig
+
+[Consider contributing](CONTRIBUTING.md) to add support for these runtimes!
+
 ## Installation
 
 ### cURL
@@ -94,3 +103,13 @@ of the runtime to install. It will then make a best effort to detect any install
 For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the run command.
 
 Read on to see runtime-specific examples and how to configure the generated Dockerfile.
+
+## Contributing
+
+Read the [CONTRIBUTING.md](CONTRIBUTING.md) guide to learn how to contribute to this project.
+
+## Used By
+
+- [FlexStack](https://flexstack.com) - A platform that simplifies the deployment of containerized applications to AWS. 
+  FlexStack uses this tool to automatically detect the runtime and framework used by your project, so you can just bring your code and deploy it with confidence.
+- *Your project here* - If you're using this tool in your project, let us know! We'd love to feature you here.
