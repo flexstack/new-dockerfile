@@ -451,13 +451,81 @@ In order of precedence:
 
 ### Ruby
 
+[Ruby](https://www.ruby-lang.org/) is a dynamic, open-source programming language with a focus on simplicity and productivity.
+
+#### Detected Files
+  - `Gemfile`
+  - `Gemfile.lock`
+  - `config.ru`
+  - `Rakefile`
+  - `config/environment.rb`
+
+#### Version Detection
+  - `.tool-versions` - `ruby {VERSION}`
+  - `.ruby-version` - `{VERSION}`
+  - `Gemfile` - `ruby '{VERSION}'`
+
+#### Runtime Image
+`ruby:${VERSION}-slim`
+
+#### Build Args
+  - `VERSION` - The version of Ruby to install (default: `3.0`)
+  - `INSTALL_CMD` - The command to install dependencies (default: detected from source code)
+  - `BUILD_CMD` - The command to build the project (default: detected from source code)
+  - `START_CMD` - The command to start the project (default: detected from source code)
+
+#### Install Command
+- `bundle install`
+- If `package.json` exists: `bundle install && [package manager install command]`
+
+#### Build Command
+- If Rails: `bundle exec rake assets:precompile`
+
+#### Start Command
+- If Rails: `bundle exec rails server -b 0.0.0.0 -p ${PORT}`
+- If `config.ru` exists: `bundle exec rackup config.ru -p ${PORT}`
+- If `config/environment.rb` exists: `bundle exec rails server -b`
+- If `Rakefile` exists: `bundle exec rake`
+
 ---
 
 ### Rust
 
+[Rust](https://www.rust-lang.org/) is a systems programming language that is known for its speed, memory safety, and parallelism.
+
+#### Detected Files
+  - `Cargo.toml`
+
+#### Runtime Image
+`debian:stable-slim`
+
+#### Build Args
+  - `TARGETOS` - The target OS for the build (default: `linux`)
+  - `TARGETARCH` - The target architecture for the build (default: `amd64`)
+  - `BIN_NAME` - The name of the release binary (default: detected via `Cargo.toml`)
+
+#### Start Command
+Determined by the binary name in the `Cargo.toml` file
+- `["/app/app"]`
+
 ---
 
 ### Static (HTML, CSS, JS)
+
+[Static Web Server](https://static-web-server.net/) is a cross-platform, high-performance & asynchronous web server for static files serving
+
+#### Detected Files
+  - `public/`
+  - `static/`
+  - `dist/`
+  - `index.html`
+
+#### Runtime Image
+`joseluisq/static-web-server:${VERSION}-debian`
+
+#### Build Args
+  - `VERSION` - The version of the static web server to install (default: `2`)
+  - `SERVER_ROOT` - The root directory of the server (default: detected from source code)
 
 ---
 

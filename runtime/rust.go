@@ -106,10 +106,10 @@ RUN chown -R nonroot:nonroot /app
 
 ARG BIN_NAME={{.BinName}}
 ENV BIN_NAME=${BIN_NAME}
-COPY --chown=nonroot:nonroot --from=build /app/target/*/release/${BIN_NAME} ./${BIN_NAME}
+COPY --chown=nonroot:nonroot --from=build /app/target/*/release/${BIN_NAME} ./app
 
 USER nonroot:nonroot
 
 ENV PORT=8080
-CMD ["/app/${BIN_NAME}"]
+CMD ["/app/app"]
 `)
