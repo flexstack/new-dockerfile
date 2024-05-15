@@ -119,6 +119,11 @@ func (d *Bun) GenerateDockerfile(path string) ([]byte, error) {
 		startCMD = string(startCMDJSON)
 	}
 
+	if buildCMD != "" {
+		buildCMDJSON, _ := json.Marshal(buildCMD)
+		buildCMD = string(buildCMDJSON)
+	}
+
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
 		"Version":  *version,

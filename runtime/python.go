@@ -92,6 +92,10 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 					if name, ok := project["name"].(string); ok {
 						projectName = name
 					}
+				} else if project, ok := pyprojectTOML["tool.poetry"].(map[string]interface{}); ok {
+					if name, ok := project["name"].(string); ok {
+						projectName = name
+					}
 				}
 			}
 

@@ -1,0 +1,8 @@
+{
+  "module": "index.ts",
+  "scripts": {
+    "build:prod": "NODE_ENV=production node build",
+    "build": "node build",
+    "start:production": "node index.mjs"
+  }
+}

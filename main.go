@@ -1,3 +1,4 @@
+// A library for auto-generating Dockerfiles from project source code.
 package dockerfile
 
 import (
@@ -9,7 +10,7 @@ import (
 	"github.com/flexstack/new-dockerfile/runtime"
 )
 
-// Creates a new Dockerfile generator.
+// Creates a new Dockerfile generator. If no logger is provided, a default logger is created.
 func New(log ...*slog.Logger) *Dockerfile {
 	var logger *slog.Logger
 
@@ -50,6 +51,7 @@ func (a *Dockerfile) Write(path string) error {
 	return nil
 }
 
+// Lists all runtimes that the Dockerfile generator can auto-generate.
 func (a *Dockerfile) ListRuntimes() []runtime.Runtime {
 	return []runtime.Runtime{
 		&runtime.Golang{Log: a.log},
@@ -67,6 +69,7 @@ func (a *Dockerfile) ListRuntimes() []runtime.Runtime {
 	}
 }
 
+// Matches the runtime of the project at the given path.
 func (a *Dockerfile) MatchRuntime(path string) (runtime.Runtime, error) {
 	for _, r := range a.ListRuntimes() {
 		if r.Match(path) {

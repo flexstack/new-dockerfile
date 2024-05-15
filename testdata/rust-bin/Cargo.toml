@@ -1,0 +1,15 @@
+[package]
+name = "ingest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde_json = "1.0.116"
+structured-logger = "1.0.3"
+tokio = { version = "1.37.0", features = ["full"] }
+warp = "0.3.7"
+
+[[bin]]
+bench = false
+path = "src/main.rs"
+name = "rg"

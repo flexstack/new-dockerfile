@@ -269,6 +269,10 @@ func isPhoenixProject(path string) bool {
 }
 
 func findBinName(path string) (string, error) {
+	if _, err := os.Stat(filepath.Join(path, "mix.exs")); err != nil {
+		return "", nil
+	}
+
 	configFile, err := os.Open(filepath.Join(path, "mix.exs"))
 	if err != nil {
 		return "", err

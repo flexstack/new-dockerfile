@@ -50,16 +50,22 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 		return nil, err
 	}
 
-	f, err := os.Open(filepath.Join(path, "package.json"))
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open package.json file")
-	}
-
-	defer f.Close()
-
 	var packageJSON map[string]interface{}
-	if err := json.NewDecoder(f).Decode(&packageJSON); err != nil {
-		return nil, fmt.Errorf("Failed to decode package.json file")
+
+	if _, err := os.Stat(filepath.Join(path, "package.json")); err == nil {
+		f, err := os.Open(filepath.Join(path, "package.json"))
+		if err != nil {
+			return nil, fmt.Errorf("Failed to open package.json file")
+		}
+
+		defer f.Close()
+
+		if err := json.NewDecoder(f).Decode(&packageJSON); err != nil {
+			return nil, fmt.Errorf("Failed to decode package.json file")
+		}
+	} else {
+		d.Log.Info("No package.json file found")
+		packageJSON = map[string]interface{}{}
 	}
 
 	installCMD := "npm ci"
@@ -76,6 +82,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 	var buildCMD, startCMD string
 
 	scripts, ok := packageJSON["scripts"].(map[string]interface{})
+
 	if ok {
 		d.Log.Info("Detected scripts in package.json")
 		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
@@ -89,6 +96,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 		if startCMD == "" {
 			for name, v := range scripts {
 				value, ok := v.(string)
+
 				if ok && startScriptRe.MatchString(value) {
 					startCMD = fmt.Sprintf("%s run %s", packageManager, name)
 					break
@@ -145,10 +153,10 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
-		"Version":     *version,
-		"InstallCMD":  installCMD,
-		"BuildScript": buildCMD,
-		"StartCMD":    startCMD,
+		"Version":    *version,
+		"InstallCMD": installCMD,
+		"BuildCMD":   buildCMD,
+		"StartCMD":   startCMD,
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
@@ -156,7 +164,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-var startScriptRe = regexp.MustCompile(`^.*?\bnode(mon)?\b.*?(index|main|server|client)\.js\b`)
+var startScriptRe = regexp.MustCompile(`^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`)
 
 var nodeTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
@@ -236,6 +244,10 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 					line := scanner.Text()
 					if strings.HasPrefix(line, "v") {
 						version = strings.TrimPrefix(line, "v")
+						log.Info("Detected Node version in " + file + ": " + version)
+						break
+					} else {
+						version = line
 						log.Info("Detected Node version in " + file + ": " + version)
 						break
 					}

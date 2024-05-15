@@ -11,12 +11,13 @@ related to this tool.
 
 - [x] Automatically detect the runtime and framework used by your project
 - [x] Use version managers like [asdf](https://github.com/asdf-vm), nvm, rbenv, and pyenv to install the correct version of the runtime
-- [x] Make a best effort to detect any install, build, and run commands
+- [x] Make a best effort to detect any install, build, and start commands
 - [x] Generate a Dockerfile with sensible defaults that are configurable via [Docker Build Args](https://docs.docker.com/build/guide/build-args/)
 - [x] Support for a wide range of the most popular languages and frameworks including Next.js, Phoenix, Spring Boot, Django, and more
 - [x] Use Debian Slim as the runtime image for a smaller image size and better security, while still supporting the most common dependencies and avoiding deployment headaches caused by Alpine Linux gotchas
 - [x] Includes `wget` in the runtime image for adding health checks to services, e.g. `wget -nv -t1 --spider 'http://localhost:8080/healthz' || exit 1`
 - [x] Use multi-stage builds to reduce the size of the final image
+- [x] Run the application as a non-root user for better security
 - [x] Supports multi-platform images that run on both x86 and ARM CPU architectures
 
 ## Supported Runtimes
@@ -105,8 +106,8 @@ For example, if it finds a `package.json` file, it will assume the project is a 
 a `next.config.js` file is present, in which case it will assume the project is a Next.js project.
 
 From there, it will read any `.tool-versions` or other version manager files to determine the correct version
-of the runtime to install. It will then make a best effort to detect any install, build, and run commands.
-For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the run command.
+of the runtime to install. It will then make a best effort to detect any install, build, and start commands.
+For example, a `serve`, `start`, `start:prod` command in a `package.json` file will be used as the start command.
 
 Runtimes are matched against in the order they appear when you run `new-dockerfile --runtime list`.
 
@@ -251,15 +252,11 @@ Detected in order of precedence:
 [Java](https://www.java.com/) is a class-based, object-oriented programming language that is designed to have as few implementation dependencies as possible.
 
 #### Detected Files
-  - `build.gradle`
-  - `gradlew`
   - `pom.{xml,atom,clj,groovy,rb,scala,yml,yaml}`
 
 #### Version Detection
 JDK version:
   - `.tool-versions` - `java {VERSION}`
-Gradle version:
-  - `.tool-versions` - `gradle {VERSION}`
 Maven version:
   - `.tool-versions` - `maven {VERSION}`
 
@@ -268,7 +265,6 @@ Maven version:
 
 #### Build Args
   - `VERSION` - The version of the JDK to install (default: `17`)
-  - `GRADLE_VERSION` - The version of Gradle to install (default: `8`)
   - `MAVEN_VERSION` - The version of Maven to install (default: `3`)
   - `JAVA_OPTS` - The Java options to pass to the JVM (default: `-Xmx512m -Xms256m`)
   - `BUILD_CMD` - The command to build the project (default: best guess via source code)
@@ -279,13 +275,10 @@ Maven version:
 
 #### Build Command
 - If Maven: `mvn -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install`
-- If Gradle: `./gradlew clean build -x check -x test`
 
 #### Start Command
 - Default: `java $JAVA_OPTS -jar target/*jar`
-- If Gradle: `java $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
 - If Spring Boot: `java -Dserver.port=${PORT} $JAVA_OPTS -jar target/*jar`
-- If Spring Boot w/ Gradle: `java -Dserver.port=${PORT} $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
 
 ---
 
@@ -300,6 +293,8 @@ Maven version:
 
 #### Version Detection
   - `.tool-versions` - `nodejs {VERSION}`
+  - `.nvmrc` - `v{VERSION}`
+  - `.node-version` - `v{VERSION}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
@@ -343,6 +338,8 @@ fi
 
 #### Version Detection
   - `.tool-versions` - `nodejs {VERSION}`
+  - `.nvmrc` - `v{VERSION}`
+  - `.node-version` - `v{VERSION}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
@@ -365,7 +362,7 @@ In order of precedence:
 #### Start Command
 In order of precedence:
   - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
-  - `package.json` scripts search for regex matching: `^.*?\bnode(mon)?\b.*?(index|main|server|client)\.js\b`
+  - `package.json` scripts search for regex matching: `^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`
   - `package.json` main/module file: `node ${mainFile}`
 
 ---
@@ -503,6 +500,12 @@ In order of precedence:
   - `TARGETOS` - The target OS for the build (default: `linux`)
   - `TARGETARCH` - The target architecture for the build (default: `amd64`)
   - `BIN_NAME` - The name of the release binary (default: detected via `Cargo.toml`)
+
+#### Build Command
+```sh 
+if [ "${TARGETARCH}" = "amd64" ]; then rustup target add x86_64-unknown-linux-gnu; else rustup target add aarch64-unknown-linux-gnu; fi
+if [ "${TARGETARCH}" = "amd64" ]; then cargo zigbuild --release --target x86_64-unknown-linux-gnu; else cargo zigbuild --release --target aarch64-unknown-linux-gnu; fi
+```
 
 #### Start Command
 Determined by the binary name in the `Cargo.toml` file

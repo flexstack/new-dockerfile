@@ -45,37 +45,44 @@ func (d *Rust) GenerateDockerfile(path string) ([]byte, error) {
 	var binName string
 	// Parse the Cargo.toml file to get the binary name
 	cargoTomlPath := filepath.Join(path, "Cargo.toml")
-	f, err := os.Open(cargoTomlPath)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to open Cargo.toml")
-	}
+	if _, err := os.Stat(cargoTomlPath); err == nil {
+		f, err := os.Open(cargoTomlPath)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to open Cargo.toml")
+		}
 
-	defer f.Close()
+		defer f.Close()
 
-	var cargoTOML map[string]interface{}
-	if err := toml.NewDecoder(f).Decode(&cargoTOML); err != nil {
-		return nil, fmt.Errorf("Failed to decode Cargo.toml")
-	}
+		var cargoTOML map[string]interface{}
+		if err := toml.NewDecoder(f).Decode(&cargoTOML); err != nil {
+			return nil, fmt.Errorf("Failed to decode Cargo.toml")
+		}
 
-	checkBins := []string{"bin", "lib", "package"}
-	var ok bool
-	var pkg map[string]interface{}
-	for _, bin := range checkBins {
-		pkg, ok = cargoTOML[bin].(map[string]interface{})
-		if ok {
-			break
+		checkBins := []string{"bin", "lib", "package"}
+		var ok bool
+		var pkg map[string]interface{}
+		for _, bin := range checkBins {
+			// [[bin]]
+			// [lib]
+			// [package]
+			if bin == "bin" {
+				if pkgs, ok := cargoTOML[bin].([]map[string]interface{}); ok {
+					if len(pkgs) > 0 {
+						pkg = pkgs[0]
+						break
+					}
+				}
+			} else if pkg, ok = cargoTOML[bin].(map[string]interface{}); ok {
+				break
+			}
+		}
+
+		if binName, ok = pkg["name"].(string); !ok {
+			d.Log.Warn("Failed to get binary name from Cargo.toml")
+		} else {
+			d.Log.Info("Detected binary name: " + binName)
 		}
 	}
-
-	if !ok {
-		return nil, fmt.Errorf("Failed to determine a binary name from Cargo.toml")
-	}
-
-	if binName, ok = pkg["name"].(string); !ok {
-		return nil, fmt.Errorf("Failed to parse binary name from Cargo.toml")
-	}
-
-	d.Log.Info("Detected binary name: " + binName)
 
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
