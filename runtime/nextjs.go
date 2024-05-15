@@ -23,6 +23,7 @@ func (d *NextJS) Match(path string) bool {
 	checkPaths := []string{
 		filepath.Join(path, "next.config.js"),
 		filepath.Join(path, "next.config.ts"),
+		filepath.Join(path, "next.config.cjs"),
 		filepath.Join(path, "next.config.mjs"),
 		filepath.Join(path, "next.config.mts"),
 		filepath.Join(path, "next-env.d.ts"),

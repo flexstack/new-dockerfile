@@ -22,7 +22,7 @@ related to this tool.
 ## Supported Runtimes
 
 - [Bun](#bun)
-- [Deno](#deno))
+- [Deno](#deno)
 - [Elixir](#elixir)
 - [Go](#go)
 - [Java](#java)
@@ -72,6 +72,11 @@ new-dockerfile [options]
 - `--help` - Show help
 
 ## CLI Examples
+
+Print the generated Dockerfile to the console:
+```sh
+new-dockerfile
+```
 
 Write a Dockerfile to the current directory:
 ```sh
@@ -180,17 +185,150 @@ Detected in order of precedence:
 
 ### Elixir
 
+[Elixir](https://elixir-lang.org/) is a dynamic, functional language designed for building scalable and maintainable applications.
+
+#### Detected Files
+  - `mix.exs`
+
+#### Version Detection
+  - `.tool-versions` - `elixir {VERSION}`
+  - `.tool-versions` - `erlang {VERSION}`
+  - `.elixir-version` - `{VERSION}`
+  - `.erlang-version` - `{VERSION}`
+
+#### Runtime Image
+`debian:stable-slim`
+
+#### Build Args
+  - `VERSION` - The version of Elixir to install (default: `1.12`)
+  - `OTP_VERSION` - The version of Erlang to install (default: `26.2.5`)
+  - `BIN_NAME` - The name of the release binary (default: detected via app name in `mix.exs`)
+
+#### Start Command
+`/app/bin/{BIN_NAME} start`
+
 ---
 
 ### Go
+
+[Go](https://golang.org/) is an open-source programming language that makes it easy to build simple, reliable, and efficient software.
+
+#### Detected Files
+  - `go.mod`
+  - `main.go`
+
+#### Version Detection
+  - `.tool-versions` - `golang {VERSION}`
+  - `go.mod` - `go {VERSION}`
+
+#### Runtime Image
+`debian:stable-slim`
+
+#### Build Args
+  - `VERSION` - The version of Go to install (default: `1.17`)
+  - `TARGETOS` - The target OS for the build (default: `linux`)
+  - `TARGETARCH` - The target architecture for the build (default: `amd64`)
+  - `CGO_ENABLED` - Enable CGO for the build (default: `0`)
+  - `PACKAGE` - The package to compile e.g. `./cmd/http` (default: detected via `cmd` directory or `main.go`)
+
+#### Package Detection
+  - Find the directory in `cmd` with a `.go` file
+  - `main.go` file in the root directory
+
+#### Install Command
+`if [ -f go.mod ]; then go mod download; fi`
+
+#### Build Command
+`CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /go/bin/app "${PACKAGE}"`
+
+#### Start Command
+`["/app/app"]`
 
 ---
 
 ### Java
 
+[Java](https://www.java.com/) is a class-based, object-oriented programming language that is designed to have as few implementation dependencies as possible.
+
+#### Detected Files
+  - `build.gradle`
+  - `gradlew`
+  - `pom.{xml,atom,clj,groovy,rb,scala,yml,yaml}`
+
+#### Version Detection
+JDK version:
+  - `.tool-versions` - `java {VERSION}`
+Gradle version:
+  - `.tool-versions` - `gradle {VERSION}`
+Maven version:
+  - `.tool-versions` - `maven {VERSION}`
+
+#### Runtime Image
+`eclipse-temurin:${VERSION}-jdk`
+
+#### Build Args
+  - `VERSION` - The version of the JDK to install (default: `17`)
+  - `GRADLE_VERSION` - The version of Gradle to install (default: `8`)
+  - `MAVEN_VERSION` - The version of Maven to install (default: `3`)
+  - `JAVA_OPTS` - The Java options to pass to the JVM (default: `-Xmx512m -Xms256m`)
+  - `BUILD_CMD` - The command to build the project (default: best guess via source code)
+  - `START_CMD` - The command to start the project (default: detected via source code)
+
+#### Install Command
+- If Maven: `mvn install`
+
+#### Build Command
+- If Maven: `mvn -DoutputFile=target/mvn-dependency-list.log -B -DskipTests clean dependency:list install`
+- If Gradle: `./gradlew clean build -x check -x test`
+
+#### Start Command
+- Default: `java $JAVA_OPTS -jar target/*jar`
+- If Gradle: `java $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
+- If Spring Boot: `java -Dserver.port=${PORT} $JAVA_OPTS -jar target/*jar`
+- If Spring Boot w/ Gradle: `java -Dserver.port=${PORT} $JAVA_OPTS -jar $(ls -1 build/libs/*jar | grep -v plain)`
+
 ---
 
 ### Next.js
+
+[Next.js](https://nextjs.org/) is a React framework that enables functionality such as server-side rendering and generating static websites.
+
+#### Detected Files
+  - `next.config.{js,mjs,cjs,ts,mts}`
+  - `next-env.d.ts`
+  - `.next/`
+
+#### Version Detection
+  - `.tool-versions` - `nodejs {VERSION}`
+
+#### Runtime Image
+`node:${VERSION}-slim`
+
+#### Build Args
+  - `VERSION` - The version of Node.js to install (default: `lts`)
+
+#### Install Command
+```sh
+if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+elif [ -f package-lock.json ]; then npm ci; \
+elif [ -f bun.lockb ]; then npm i -g bun && bun install; \
+elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+else echo "Lockfile not found." && exit 1; \
+fi
+```
+#### Build Command
+```sh
+if [ -f yarn.lock ]; then yarn run build; \
+elif [ -f package-lock.json ]; then npm run build; \
+elif [ -f bun.lockb ]; then npm i -g bun && bun run build; \
+elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+else echo "Lockfile not found." && exit 1; \
+fi
+```
+
+#### Start Command
+- If `"output" :"standalone"`  in `next.config.js`: `HOSTNAME="0.0.0.0" node server.js`
+- Otherwise `["node_modules/.bin/next", "start", "-H", "0.0.0.0"]`
 
 ---
 

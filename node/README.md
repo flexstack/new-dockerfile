@@ -59,6 +59,11 @@ npm install -g new-dockerfile
 
 ## Examples
 
+Print the generated Dockerfile to the console:
+```sh
+new-dockerfile
+```
+
 Write a Dockerfile to the current directory:
 ```sh
 new-dockerfile --write

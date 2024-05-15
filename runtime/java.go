@@ -183,6 +183,8 @@ WORKDIR /app
 COPY build.gradle* gradlew* settings.gradle* ./
 COPY gradle/ ./gradle/
 COPY src src
+
+ARG BUILD_CMD={{.BuildCMD}}
 RUN if [ ! -z "${BUILD_CMD}" ]; then ${BUILD_CMD}; fi
 
 FROM eclipse-temurin:${VERSION}-jdk AS runtime
@@ -353,7 +355,7 @@ func isSpringBootApp(path string) bool {
 	checkFiles := append([]string{}, pomFiles...)
 	checkFiles = append(checkFiles, "build.gradle")
 
-	for _, file := range pomFiles {
+	for _, file := range checkFiles {
 		pomXML, err := os.Open(filepath.Join(path, file))
 		if err != nil {
 			continue
