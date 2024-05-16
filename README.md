@@ -1,4 +1,4 @@
-# Autogenerate a Dockerfile
+# Dockerfile Generator
 
 `new-dockerfile` is a CLI tool and Go package automatically generates a configurable Dockerfile 
 based on your project source code. It supports a wide range of languages and frameworks, including Next.js, 
