@@ -3,7 +3,6 @@ package runtime
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"os"
@@ -117,27 +116,12 @@ func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
   See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *version, packageManager, installCMD, buildCMD, startCMD),
 	)
 
-	if installCMD != "" {
-		installCMDJSON, _ := json.Marshal(installCMD)
-		installCMD = string(installCMDJSON)
-	}
-
-	if buildCMD != "" {
-		buildCMDJSON, _ := json.Marshal(buildCMD)
-		buildCMD = string(buildCMDJSON)
-	}
-
-	if startCMD != "" {
-		startCMDJSON, _ := json.Marshal(startCMD)
-		startCMD = string(startCMDJSON)
-	}
-
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
 		"Version":    *version,
-		"InstallCMD": installCMD,
-		"BuildCMD":   buildCMD,
-		"StartCMD":   startCMD,
+		"InstallCMD": safeCommand(installCMD),
+		"BuildCMD":   safeCommand(buildCMD),
+		"StartCMD":   safeCommand(startCMD),
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
@@ -159,7 +143,7 @@ ENV NODE_ENV=production
 RUN chown -R nonroot:nonroot /app
 COPY --chown=nonroot:nonroot . .
 
-RUN if [ ! -z "${INSTALL_CMD}" ]; then $INSTALL_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh;  fi
 RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
 
 ENV PORT=8080
