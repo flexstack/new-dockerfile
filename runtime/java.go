@@ -151,7 +151,7 @@ COPY src src
 RUN mvn install
 
 ARG BUILD_CMD={{.BuildCMD}}
-RUN if [ ! -z "${BUILD_CMD}" ]; then ${BUILD_CMD}; fi
+RUN if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM eclipse-temurin:${VERSION}-jdk AS runtime
 WORKDIR /app
@@ -185,7 +185,7 @@ COPY gradle/ ./gradle/
 COPY src src
 
 ARG BUILD_CMD={{.BuildCMD}}
-RUN if [ ! -z "${BUILD_CMD}" ]; then ${BUILD_CMD}; fi
+RUN if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM eclipse-temurin:${VERSION}-jdk AS runtime
 WORKDIR /app

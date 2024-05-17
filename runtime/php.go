@@ -145,8 +145,8 @@ COPY . .
 
 ARG INSTALL_CMD={{.InstallCMD}}
 ARG BUILD_CMD={{.BuildCMD}}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh; fi
-RUN if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
+RUN if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM php:${VERSION}-apache AS runtime
 

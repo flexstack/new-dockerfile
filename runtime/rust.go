@@ -97,6 +97,7 @@ func (d *Rust) GenerateDockerfile(path string) ([]byte, error) {
 }
 
 var rustlangTemplate = strings.TrimSpace(`
+ARG BUILDPLATFORM=linux
 FROM --platform=${BUILDPLATFORM} messense/cargo-zigbuild:latest AS build
 WORKDIR /app
 COPY . .

@@ -180,7 +180,7 @@ COPY --from=deps /app/node_modules* ./node_modules
 COPY . .
 ENV NODE_ENV=production
 ARG BUILD_CMD={{.BuildCMD}}
-RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
+RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM base AS runtime
 WORKDIR /app
