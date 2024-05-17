@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -139,32 +140,26 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
   See https://flexstack.com/docs/languages-and-frameworks/autogenerate-dockerfile`, *version, packageManager, installCMD, buildCMD, startCMD),
 	)
 
-	if installCMD != "" {
-		installCMDJSON, _ := json.Marshal(installCMD)
-		installCMD = string(installCMDJSON)
-	}
-
-	if buildCMD != "" {
-		buildCMDJSON, _ := json.Marshal(buildCMD)
-		buildCMD = string(buildCMDJSON)
-	}
-
-	if startCMD != "" {
-		startCMDJSON, _ := json.Marshal(startCMD)
-		startCMD = string(startCMDJSON)
-	}
-
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
 		"Version":    *version,
-		"InstallCMD": installCMD,
-		"BuildCMD":   buildCMD,
-		"StartCMD":   startCMD,
+		"InstallCMD": safeCommand(installCMD),
+		"BuildCMD":   safeCommand(buildCMD),
+		"StartCMD":   safeCommand(startCMD),
 	}); err != nil {
-		return nil, fmt.Errorf("Failed to execute template")
+		return nil, errors.New("Failed to execute template")
 	}
 
 	return buf.Bytes(), nil
+}
+
+func safeCommand(cmd string) string {
+	if cmd == "" {
+		return ""
+	}
+
+	cmdJSON, _ := json.Marshal(cmd)
+	return strings.ReplaceAll(string(cmdJSON), `\u0026\u0026`, "&&")
 }
 
 var startScriptRe = regexp.MustCompile(`^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`)
@@ -177,7 +172,7 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* bun.lockb* ./
 ARG INSTALL_CMD={{.InstallCMD}}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then $INSTALL_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh; fi
 
 FROM base AS builder
 WORKDIR /app

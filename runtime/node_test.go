@@ -60,7 +60,7 @@ func TestNodeGenerateDockerfile(t *testing.T) {
 		{
 			name:     "Node project with pnpm",
 			path:     "../testdata/node-pnpm",
-			expected: []any{`ARG VERSION=16.0.0`, `ARG INSTALL_CMD="corepack enable pnpm \u0026\u0026 pnpm i --frozen-lockfile"`, `ARG BUILD_CMD="pnpm run build:prod"`, `ARG START_CMD="pnpm run start:production"`},
+			expected: []any{`ARG VERSION=16.0.0`, `ARG INSTALL_CMD="corepack enable pnpm && pnpm i --frozen-lockfile"`, `ARG BUILD_CMD="pnpm run build:prod"`, `ARG START_CMD="pnpm run start:production"`},
 		},
 		{
 			name:     "Node project with yarn",
