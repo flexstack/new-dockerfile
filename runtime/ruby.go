@@ -143,8 +143,8 @@ ENV NODE_ENV=production
 RUN chown -R nonroot:nonroot /app
 COPY --chown=nonroot:nonroot . .
 
-RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh;  fi
-RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
+RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 ENV PORT=8080
 USER nonroot:nonroot

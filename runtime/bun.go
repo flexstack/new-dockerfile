@@ -144,8 +144,7 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json bun.lockb ./
 ARG INSTALL_CMD="bun install"
-ENV INSTALL_CMD=${INSTALL_CMD}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then $INSTALL_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
 
 FROM base AS builder
 WORKDIR /app
@@ -153,8 +152,7 @@ COPY --from=deps /app/node_modules* ./node_modules
 COPY . .
 ENV NODE_ENV=production
 ARG BUILD_CMD={{.BuildCMD}}
-ENV BUILD_CMD=${BUILD_CMD}
-RUN  if [ ! -z "${BUILD_CMD}" ]; then $BUILD_CMD; fi
+RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM oven/bun:${VERSION}-slim AS runtime
 WORKDIR /app

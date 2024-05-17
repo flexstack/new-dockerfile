@@ -167,7 +167,7 @@ RUN chown -R nonroot:nonroot /app
 
 COPY --chown=nonroot:nonroot . .
 ARG INSTALL_CMD={{.InstallCMD}}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh;  fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
 
 ENV PORT=8080
 ENV PYTHONDONTWRITEBYTECODE=1

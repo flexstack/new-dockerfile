@@ -192,8 +192,7 @@ USER nonroot:nonroot
 
 ENV PORT=8080
 ARG INSTALL_CMD={{.InstallCMD}}
-ENV INSTALL_CMD=${INSTALL_CMD}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then $INSTALL_CMD; fi
+RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
 
 ARG START_CMD={{.StartCMD}}
 ENV START_CMD=${START_CMD}
