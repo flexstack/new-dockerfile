@@ -103,7 +103,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python-pyproject",
 			expected: []any{
 				`ARG VERSION=3.12`,
-				`ARG INSTALL_CMD="pip install --upgrade build setuptools \u0026\u0026 pip install .`,
+				`ARG INSTALL_CMD="pip install --upgrade build setuptools && pip install .`,
 				`ARG START_CMD="python -m pyproject"`,
 			},
 		},

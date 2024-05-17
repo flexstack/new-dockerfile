@@ -92,7 +92,7 @@ func TestRubyGenerateDockerfile(t *testing.T) {
 			path: "../testdata/ruby-rails",
 			expected: []any{
 				`ARG VERSION=3.1`,
-				`ARG INSTALL_CMD="bundle install \u0026\u0026 corepack enable pnpm \u0026\u0026 pnpm i --frozen-lockfile"`,
+				`ARG INSTALL_CMD="bundle install && corepack enable pnpm && pnpm i --frozen-lockfile"`,
 				`ARG BUILD_CMD="bundle exec rake assets:precompile"`,
 				`ARG START_CMD="bundle exec rails server -b 0.0.0.0 -p ${PORT}`,
 			},
