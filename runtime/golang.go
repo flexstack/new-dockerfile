@@ -96,6 +96,7 @@ func (d *Golang) GenerateDockerfile(path string) ([]byte, error) {
 
 var golangTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
+ARG BUILDPLATFORM=linux
 FROM --platform=${BUILDPLATFORM} golang:${VERSION} AS base
 WORKDIR /go/src/app
 ARG TARGETOS=linux
