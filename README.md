@@ -143,7 +143,7 @@ Detected in order of precedence:
 #### Start Command
 
 Detected in order of precedence:
-  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "preview", "start"`
   - `package.json` main/module file: `bun run ${mainFile}`
 
 ---
@@ -179,7 +179,7 @@ Detected in order of precedence:
 #### Start Command
 
 Detected in order of precedence:
-  - `deno.jsonc` tasks: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - `deno.jsonc` tasks: `"serve", "start:prod", "start:production", "start-prod", "start-production", "preview", "start"`
   - Main/module file: `deno run ["mod.ts", "src/mod.ts", "main.ts", "src/main.ts", "index.ts", "src/index.ts]"`
   
 ---
@@ -361,7 +361,7 @@ In order of precedence:
 
 #### Start Command
 In order of precedence:
-  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "start"`
+  - `package.json` scripts: `"serve", "start:prod", "start:production", "start-prod", "start-production", "preview", "start"`
   - `package.json` scripts search for regex matching: `^.*?\b(ts-)?node(mon)?\b.*?(index|main|server|client)\.([cm]?[tj]s)\b`
   - `package.json` main/module file: `node ${mainFile}`
 

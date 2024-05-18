@@ -86,7 +86,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 
 	if ok {
 		d.Log.Info("Detected scripts in package.json")
-		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
+		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "preview", "start"}
 		for _, cmd := range startCommands {
 			if _, ok := scripts[cmd].(string); ok {
 				startCMD = fmt.Sprintf("%s run %s", packageManager, cmd)

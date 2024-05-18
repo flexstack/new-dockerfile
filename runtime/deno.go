@@ -99,7 +99,7 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 
 	scripts, ok := denoJSON["tasks"].(map[string]interface{})
 	if ok {
-		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "start"}
+		startCommands := []string{"serve", "start:prod", "start:production", "start-prod", "start-production", "preview", "start"}
 		for _, cmd := range startCommands {
 			if _, ok := scripts[cmd].(string); ok {
 				d.Log.Info("Detected start command in deno.json: " + cmd)
