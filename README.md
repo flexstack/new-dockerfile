@@ -230,6 +230,7 @@ Detected in order of precedence:
   - `TARGETOS` - The target OS for the build (default: `linux`)
   - `TARGETARCH` - The target architecture for the build (default: `amd64`)
   - `CGO_ENABLED` - Enable CGO for the build (default: `0`)
+  - `GOPROXY` - The Go module proxy to use (default: `direct`)
   - `PACKAGE` - The package to compile e.g. `./cmd/http` (default: detected via `cmd` directory or `main.go`)
 
 #### Package Detection
