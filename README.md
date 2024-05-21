@@ -99,6 +99,18 @@ List the supported runtimes:
 new-dockerfile --runtime list
 ```
 
+## Read from Config file
+
+In the CI use case, you might need a very common step for generating a `Dockerfile`. You can create a config file for the
+CLI options. The default config file name is `new-dockerfile.yaml`, and it should be in the root directory of your git
+repository. Especially, there are multiple kinds of files, `new-dockerfile` might not be able to it a correct one.
+
+```yaml
+runtime: go
+```
+
+And, the CLI option will overwrite the values from config file.
+
 ## How it Works
 
 The tool searches for common files and directories in your project to determine the runtime and framework.
