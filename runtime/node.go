@@ -172,6 +172,8 @@ FROM base AS deps
 WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* bun.lockb* ./
 ARG INSTALL_CMD={{.InstallCMD}}
+ARG NPM_MIRROR=
+RUN if [ ! -z "${NPM_MIRROR}" ]; then npm config set registry ${NPM_MIRROR}; fi
 RUN if [ ! -z "${INSTALL_CMD}" ]; then echo "${INSTALL_CMD}" > dep.sh; sh dep.sh; fi
 
 FROM base AS builder
