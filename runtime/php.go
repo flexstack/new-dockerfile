@@ -102,7 +102,11 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 			buildCommands := []string{"build:prod", "build:production", "build-prod", "build-production", "build"}
 			for _, cmd := range buildCommands {
 				if _, ok := scripts[cmd].(string); ok {
-					buildCMD = fmt.Sprintf("%s run %s", packageManager, cmd)
+					corepack := ""
+					if packageManager == "pnpm" {
+						corepack = "corepack enable pnpm &&"
+					}
+					buildCMD = fmt.Sprintf("%s%s run %s", corepack, packageManager, cmd)
 					d.Log.Info("Detected build command in package.json: " + buildCMD)
 					break
 				}

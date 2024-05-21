@@ -76,7 +76,7 @@ func (d *Node) GenerateDockerfile(path string) ([]byte, error) {
 		installCMD = "yarn --frozen-lockfile"
 		packageManager = "yarn"
 	} else if _, err := os.Stat(filepath.Join(path, "pnpm-lock.yaml")); err == nil {
-		installCMD = "corepack enable pnpm && pnpm i --frozen-lockfile"
+		installCMD = "pnpm i --frozen-lockfile"
 		packageManager = "pnpm"
 	}
 
@@ -167,6 +167,7 @@ var startScriptRe = regexp.MustCompile(`^.*?\b(ts-)?node(mon)?\b.*?(index|main|s
 var nodeTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
 FROM node:${VERSION}-slim AS base
+RUN corepack enable
 
 FROM base AS deps
 WORKDIR /app
@@ -188,7 +189,9 @@ FROM base AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
-RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
+RUN addgroup --system nonroot && adduser --disabled-login --ingroup nonroot nonroot
+ENV COREPACK_HOME=/app/.cache
+RUN mkdir -p /app/.cache
 RUN chown -R nonroot:nonroot /app
 
 COPY --chown=nonroot:nonroot --from=builder /app .
