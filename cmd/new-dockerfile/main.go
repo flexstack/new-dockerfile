@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"github.com/spf13/viper"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -43,11 +45,21 @@ func main() {
 	log := slog.New(handler)
 	df := dockerfile.New(log)
 
+	viper.SetConfigName("new-dockerfile")
+	viper.SetConfigType("yaml")
+	viper.SetConfigType("yml")
+	viper.AddConfigPath(".")
+	if err := viper.ReadInConfig(); err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+		log.Error("Fatal error: " + err.Error())
+		os.Exit(1)
+	}
+
 	var (
 		r   runtime.Runtime
 		err error
 	)
 
+	runtimeArg = viper.GetString("runtime")
 	if runtimeArg != "" {
 		runtimes := df.ListRuntimes()
 
