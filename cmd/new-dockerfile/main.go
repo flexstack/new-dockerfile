@@ -3,12 +3,13 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/spf13/viper"
 	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/viper"
 
 	dockerfile "github.com/flexstack/new-dockerfile"
 	"github.com/flexstack/new-dockerfile/runtime"
@@ -49,9 +50,18 @@ func main() {
 	viper.SetConfigType("yaml")
 	viper.SetConfigType("yml")
 	viper.AddConfigPath(".")
-	if err := viper.ReadInConfig(); err != nil && !errors.As(err, &viper.ConfigFileNotFoundError{}) {
-		log.Error("Fatal error: " + err.Error())
-		os.Exit(1)
+	configExists := true
+	if err := viper.ReadInConfig(); err != nil {
+		if !errors.As(err, &viper.ConfigFileNotFoundError{}) {
+			log.Error("Fatal error: " + err.Error())
+			os.Exit(1)
+		}
+
+		configExists = false
+	}
+
+	if configExists {
+		runtimeArg = viper.GetString("runtime")
 	}
 
 	var (
@@ -59,7 +69,6 @@ func main() {
 		err error
 	)
 
-	runtimeArg = viper.GetString("runtime")
 	if runtimeArg != "" {
 		runtimes := df.ListRuntimes()
 
