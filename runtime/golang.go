@@ -96,29 +96,28 @@ func (d *Golang) GenerateDockerfile(path string) ([]byte, error) {
 
 var golangTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-ARG BUILDPLATFORM=linux
+ARG BUILDPLATFORM=linux/amd64
 FROM --platform=${BUILDPLATFORM} golang:${VERSION} AS base
+
+FROM base AS deps 
 WORKDIR /go/src/app
-ARG TARGETOS=linux
-ARG TARGETARCH=arm64
-ARG CGO_ENABLED=0
+COPY go.mod* go.sum* ./
+# GOPROXY is used to specify the module proxy to use.
 ARG GOPROXY=direct
+ENV GOPROXY=${GOPROXY}
+RUN if [ -f go.mod ]; then go mod download && go mod tidy; fi
+
+FROM deps AS build
+WORKDIR /go/src/app
 
 COPY . .
-ENV GOPROXY=${GOPROXY}
-RUN if [ -f go.mod ]; then go mod download; fi
 
-FROM base AS build
-WORKDIR /go/src/app
-ARG TARGETOS=linux
-ARG TARGETARCH=arm64
-ARG CGO_ENABLED=0
 ARG PACKAGE={{.Package}}
-ARG GOPROXY=direct
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ARG CGO_ENABLED=0
 # -trimpath removes the absolute path to the source code in the binary
 # -ldflags="-s -w" removes the symbol table and debug information from the binary
-# CGO_ENABLED=0 disables the use of cgo
-ENV GOPROXY=${GOPROXY}
 RUN CGO_ENABLED=${CGO_ENABLED} GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags="-s -w" -o /go/bin/app "${PACKAGE}"
 
 FROM debian:stable-slim
@@ -130,6 +129,7 @@ RUN chown -R nonroot:nonroot /app
 COPY --chown=nonroot:nonroot --from=build /go/bin/app .
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 CMD ["/app/app"]
 `)
