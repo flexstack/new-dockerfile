@@ -28,6 +28,8 @@ func main() {
 	flag.BoolVar(&quiet, "quiet", false, "Disable all log output except errors")
 	var write bool
 	flag.BoolVar(&write, "write", false, "Write the Dockerfile to disk at ./Dockerfile")
+	var overwrite bool
+	flag.BoolVar(&overwrite, "overwrite", false, "Overwrite the Dockerfile if it already exists")
 	flag.Parse()
 
 	level := slog.LevelInfo
@@ -45,6 +47,14 @@ func main() {
 
 	log := slog.New(handler)
 	df := dockerfile.New(log)
+
+	// jump out if users don't want to overwrite the Dockerfile
+	if write && !overwrite {
+		if _, err := os.Stat(filepath.Join(path, "Dockerfile")); err == nil {
+			log.Error("Dockerfile already exists. Use --overwrite to overwrite it.")
+			return
+		}
+	}
 
 	viper.SetConfigName("new-dockerfile")
 	viper.SetConfigType("yaml")
