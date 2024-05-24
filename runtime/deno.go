@@ -169,10 +169,7 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 
 var denoTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM denoland/deno:${VERSION} AS base
-
-WORKDIR /app
-COPY . .
+FROM denoland/deno:${VERSION} as base
 
 FROM debian:stable-slim
 WORKDIR /app
@@ -185,12 +182,13 @@ ENV DENO_DIR=.deno_cache
 RUN mkdir -p /app/${DENO_DIR}
 RUN chown -R nonroot:nonroot /app/${DENO_DIR}
 
-COPY --chown=nonroot:nonroot --from=denoland/deno:bin-1.43.3 /deno /usr/local/bin/deno
-COPY --chown=nonroot:nonroot --from=base /app .
+COPY --chown=nonroot:nonroot --from=base /usr/bin/deno /usr/local/bin/deno
+COPY --chown=nonroot:nonroot . .
 
 USER nonroot:nonroot
 
 ENV PORT=8080
+EXPOSE ${PORT}
 ARG INSTALL_CMD={{.InstallCMD}}
 RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
 
