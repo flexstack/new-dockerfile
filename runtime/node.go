@@ -188,7 +188,8 @@ RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 FROM base AS runtime
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --disabled-login --ingroup nonroot nonroot
 ENV COREPACK_HOME=/app/.cache
 RUN mkdir -p /app/.cache

@@ -161,7 +161,8 @@ var pythonTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
 FROM python:${VERSION}-slim
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
 

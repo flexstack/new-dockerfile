@@ -16,6 +16,7 @@ related to this tool.
 - [x] Support for a wide range of the most popular languages and frameworks including Next.js, Phoenix, Spring Boot, Django, and more
 - [x] Use Debian Slim as the runtime image for a smaller image size and better security, while still supporting the most common dependencies and avoiding deployment headaches caused by Alpine Linux gotchas
 - [x] Includes `wget` in the runtime image for adding health checks to services, e.g. `wget -nv -t1 --spider 'http://localhost:8080/healthz' || exit 1`
+- [x] Includes `ca-certificates` in the runtime image to allow secure HTTPS connections
 - [x] Use multi-stage builds to reduce the size of the final image
 - [x] Run the application as a non-root user for better security
 - [x] Supports multi-platform images that run on both x86 and ARM CPU architectures
