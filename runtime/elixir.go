@@ -109,6 +109,7 @@ RUN mix release
 FROM debian:stable-slim AS runtime
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends wget libstdc++6 openssl libncurses5 locales ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*
+RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
 RUN chown -R nonroot:nonroot /app
