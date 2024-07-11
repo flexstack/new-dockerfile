@@ -169,7 +169,8 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 
 var denoTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM denoland/deno:${VERSION} as base
+ARG BUILDER=docker.io/denoland/deno
+FROM ${BUILDER}:${VERSION} as base
 
 FROM debian:stable-slim
 WORKDIR /app

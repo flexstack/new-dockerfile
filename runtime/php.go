@@ -142,7 +142,8 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 
 var phpTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM composer:lts as build
+ARG BUILDER=docker.io/library/composer
+FROM ${BUILDER}:lts as build
 RUN apk add --no-cache nodejs npm
 WORKDIR /app
 COPY . .

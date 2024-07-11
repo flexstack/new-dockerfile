@@ -138,7 +138,8 @@ func (d *Bun) GenerateDockerfile(path string) ([]byte, error) {
 
 var bunTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM oven/bun:${VERSION} AS base
+ARG BUILDER=docker.io/oven/bun
+FROM ${BUILDER}:${VERSION} AS base
 
 FROM base AS deps
 WORKDIR /app
@@ -154,7 +155,7 @@ ENV NODE_ENV=production
 ARG BUILD_CMD={{.BuildCMD}}
 RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
-FROM oven/bun:${VERSION}-slim AS runtime
+FROM ${BUILDER}:${VERSION}-slim AS runtime
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*

@@ -82,7 +82,8 @@ func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
 var elixirTemplate = strings.TrimSpace(`
 ARG VERSION={{.ElixirVersion}}
 ARG OTP_VERSION={{.OTPVersion}}
-FROM elixir:${VERSION}-otp-${OTP_VERSION}-slim AS build
+ARG BUILDER=docker.io/library/elixir
+FROM ${BUILDER}:${VERSION}-otp-${OTP_VERSION}-slim AS build
 WORKDIR /app
 RUN apt-get update -y && apt-get install -y build-essential git \
     && apt-get clean && rm -f /var/lib/apt/lists/*_*
