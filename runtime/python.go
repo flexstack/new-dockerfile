@@ -159,7 +159,8 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 
 var pythonTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM python:${VERSION}-slim
+ARG BUILDER=docker.io/library/python
+FROM ${BUILDER}:${VERSION}-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*
 RUN update-ca-certificates 2>/dev/null || true

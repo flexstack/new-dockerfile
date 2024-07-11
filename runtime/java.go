@@ -178,7 +178,8 @@ CMD ${START_CMD}
 var javaGradleTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
 ARG GRADLE_VERSION={{.GradleVersion}}
-FROM gradle:${GRADLE_VERSION}-jdk${VERSION} AS build
+ARG BUILDER=docker.io/library/gradle
+FROM ${BUILDER}:${GRADLE_VERSION}-jdk${VERSION} AS build
 WORKDIR /app
 
 COPY build.gradle* gradlew* settings.gradle* ./

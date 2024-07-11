@@ -67,7 +67,8 @@ func (d *Static) GenerateDockerfile(path string) ([]byte, error) {
 
 var staticTemplate = strings.TrimSpace(`
 ARG VERSION=2
-FROM joseluisq/static-web-server:${VERSION}-debian
+ARG BUILDER=docker.io/joseluisq/static-web-server
+FROM ${BUILDER}:${VERSION}-debian
 RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get clean && rm -f /var/lib/apt/lists/*_*
 COPY . .
 

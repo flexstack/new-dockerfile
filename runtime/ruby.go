@@ -131,7 +131,8 @@ func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
 
 var rubyTemplate = strings.TrimSpace(`
 ARG VERSION={{.Version}}
-FROM ruby:${VERSION}-slim
+ARG BUILDER=docker.io/library/ruby
+FROM ${BUILDER}:${VERSION}-slim
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certificates && apt-get clean && rm -f /var/lib/apt/lists/*_*
 RUN update-ca-certificates 2>/dev/null || true
