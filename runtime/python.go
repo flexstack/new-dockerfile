@@ -80,32 +80,35 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	managePy := isDjangoProject(path)
+	isFastAPI := isFastAPIProject(path)
 	startCMD := ""
 	projectName := filepath.Base(path)
 
 	if managePy != nil {
 		d.Log.Info("Detected Django project")
 		startCMD = fmt.Sprintf(`python ` + *managePy + ` runserver 0.0.0.0:${PORT}`)
-	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
-		f, err := os.Open(filepath.Join(path, "pyproject.toml"))
-		if err == nil {
-			var pyprojectTOML map[string]interface{}
-			err := toml.NewDecoder(f).Decode(&pyprojectTOML)
+	} else if !isFastAPI {
+		if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
+			f, err := os.Open(filepath.Join(path, "pyproject.toml"))
 			if err == nil {
-				if project, ok := pyprojectTOML["project"].(map[string]interface{}); ok {
-					if name, ok := project["name"].(string); ok {
-						projectName = name
-					}
-				} else if project, ok := pyprojectTOML["tool.poetry"].(map[string]interface{}); ok {
-					if name, ok := project["name"].(string); ok {
-						projectName = name
+				var pyprojectTOML map[string]interface{}
+				err := toml.NewDecoder(f).Decode(&pyprojectTOML)
+				if err == nil {
+					if project, ok := pyprojectTOML["project"].(map[string]interface{}); ok {
+						if name, ok := project["name"].(string); ok {
+							projectName = name
+						}
+					} else if project, ok := pyprojectTOML["tool.poetry"].(map[string]interface{}); ok {
+						if name, ok := project["name"].(string); ok {
+							projectName = name
+						}
 					}
 				}
-			}
 
-			if projectName != "" {
-				startCMD = fmt.Sprintf(`python -m %s`, projectName)
-				d.Log.Info("Detected start command via pyproject.toml")
+				if projectName != "" {
+					startCMD = fmt.Sprintf(`python -m %s`, projectName)
+					d.Log.Info("Detected start command via pyproject.toml")
+				}
 			}
 		}
 	}
@@ -129,8 +132,12 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 				continue
 			}
 
-			startCMD = fmt.Sprintf(`python %s`, fn)
-			d.Log.Info("Detected start command via main file: " + startCMD)
+			if isFastAPI {
+				startCMD = fmt.Sprintf(`fastapi run %s --port ${PORT}`, fn)
+			} else {
+				startCMD = fmt.Sprintf(`python %s`, fn)
+				d.Log.Info("Detected start command via main file: " + startCMD)
+			}
 			break
 		}
 	}
@@ -304,4 +311,32 @@ func isDjangoProject(path string) *string {
 	}
 
 	return nil
+}
+
+func isFastAPIProject(path string) bool {
+	packagerFiles := []string{"requirements.txt", "pyproject.toml", "Pipfile"}
+
+	for _, file := range packagerFiles {
+		_, err := os.Stat(filepath.Join(path, file))
+		if err == nil {
+			f, err := os.Open(filepath.Join(path, file))
+			if err != nil {
+				return false
+			}
+
+			defer f.Close()
+
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Contains(strings.ToLower(line), "fastapi") {
+					return true
+				}
+			}
+
+			f.Close()
+		}
+	}
+
+	return false
 }

@@ -455,6 +455,7 @@ In order of precedence:
 
 #### Start Command
 - If Django is detected: `python manage.py runserver 0.0.0.0:${PORT}`
+- If FastAPI is detected: `fastapi run [main.py, app.py, application.py, app/main.py, app/application.py, app/__init__.py]`
 - If `pyproject.toml` exists: `python -m ${projectName}`
 - Otherwise: `python [main.py, app.py, application.py, app/main.py, app/application.py, app/__init__.py]`
 

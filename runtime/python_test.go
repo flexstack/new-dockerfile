@@ -108,6 +108,15 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			},
 		},
 		{
+			name: "Python project with FastAPI",
+			path: "../testdata/python-fastapi",
+			expected: []any{
+				`ARG VERSION=3.6.0`,
+				`ARG INSTALL_CMD="PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"`,
+				`ARG START_CMD="fastapi run main.py --port ${PORT}"`,
+			},
+		},
+		{
 			name: "Not a Python project",
 			path: "../testdata/deno",
 			expected: []any{
