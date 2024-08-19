@@ -73,6 +73,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get
 COPY . .
 
 ENV PORT=8080
+EXPOSE ${PORT}
 ENV SERVER_PORT=${PORT}
 ARG SERVER_ROOT={{.ServerRoot}}
 ENV SERVER_ROOT=${SERVER_ROOT}

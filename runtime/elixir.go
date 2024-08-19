@@ -129,6 +129,7 @@ COPY --from=build --chown=nonroot:nonroot /app/_build/${MIX_ENV}/rel/${BIN_NAME}
 RUN cp /app/bin/${BIN_NAME} /app/bin/server
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 CMD ["/app/bin/server", "start"]

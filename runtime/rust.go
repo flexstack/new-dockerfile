@@ -123,5 +123,6 @@ COPY --chown=nonroot:nonroot --from=build /app/target/*/release/${BIN_NAME} ./ap
 USER nonroot:nonroot
 
 ENV PORT=8080
+EXPOSE ${PORT}
 CMD ["/app/app"]
 `)

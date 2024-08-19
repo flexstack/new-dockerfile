@@ -163,8 +163,8 @@ COPY --from=builder --chown=nonroot:nonroot /app/.next/static ./.next/static
 
 USER nonroot
 
-EXPOSE 3000
 ENV PORT=3000
+EXPOSE ${PORT}
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
@@ -219,5 +219,6 @@ USER nonroot
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV PORT=8080
+EXPOSE ${PORT}
 CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0"]
 `)

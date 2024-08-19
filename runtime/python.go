@@ -177,18 +177,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
 RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
-ENV PYTHONDONTWRITEBYTECODE=1 \
-  PYTHONUNBUFFERED=1 \
-  POETRY_NO_INTERACTION=1 \
-  POETRY_VIRTUALENVS_CREATE=false \
-  POETRY_CACHE_DIR='/var/cache/pypoetry' \
-  POETRY_HOME='/usr/local'
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VIRTUALENVS_CREATE=false
+ENV POETRY_CACHE_DIR='/var/cache/pypoetry'
+ENV POETRY_HOME='/usr/local'
 
 COPY --chown=nonroot:nonroot . .
 ARG INSTALL_CMD={{.InstallCMD}}
 RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG START_CMD={{.StartCMD}}

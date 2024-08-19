@@ -165,6 +165,7 @@ RUN chown -R nonroot:nonroot /app
 COPY --from=build --chown=nonroot:nonroot /app/target/*.jar /app/target/
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG JAVA_OPTS=
@@ -200,6 +201,7 @@ RUN chown -R nonroot:nonroot /app
 COPY --from=build --chown=nonroot:nonroot /app/build/libs/*.jar /app/build/libs/
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG JAVA_OPTS=

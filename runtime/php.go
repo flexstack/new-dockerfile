@@ -160,6 +160,7 @@ RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot	
 	
 ENV PORT=8080
+EXPOSE ${PORT}
 RUN sed -i "s/80/${PORT}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 COPY --from=build --chown=nonroot:nonroot /app /var/www/html
 

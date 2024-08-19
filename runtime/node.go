@@ -201,6 +201,7 @@ COPY --chown=nonroot:nonroot --from=builder /app .
 USER nonroot:nonroot
 
 ENV PORT=8080
+EXPOSE ${PORT}
 ENV NODE_ENV=production
 ARG START_CMD={{.StartCMD}}
 ENV START_CMD=${START_CMD}

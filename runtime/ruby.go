@@ -149,6 +149,7 @@ RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
 RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG START_CMD={{.StartCMD}}
