@@ -76,7 +76,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python-django",
 			expected: []any{
 				`ARG VERSION=3.6.0`,
-				`ARG INSTALL_CMD="PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"`,
+				`ARG INSTALL_CMD="pip install pipenv && pipenv install --dev --system --deploy"`,
 				`ARG START_CMD="python manage.py runserver 0.0.0.0:${PORT}"`,
 			},
 		},
@@ -85,7 +85,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python-pdm",
 			expected: []any{
 				`ARG VERSION=3.4.1`,
-				`ARG INSTALL_CMD="pdm install --prod"`,
+				`ARG INSTALL_CMD="pip install pdm && pdm install --prod"`,
 				`ARG START_CMD="python app.py"`,
 			},
 		},
@@ -94,7 +94,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python-poetry",
 			expected: []any{
 				`ARG VERSION=3.8.5`,
-				`ARG INSTALL_CMD="poetry install --no-dev --no-interactive --no-ansi"`,
+				`ARG INSTALL_CMD="pip install poetry && poetry install --no-dev --no-ansi --no-root"`,
 				`ARG START_CMD="python app/main.py"`,
 			},
 		},
@@ -112,7 +112,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python-fastapi",
 			expected: []any{
 				`ARG VERSION=3.6.0`,
-				`ARG INSTALL_CMD="PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"`,
+				`ARG INSTALL_CMD="pip install pipenv && pipenv install --dev --system --deploy"`,
 				`ARG START_CMD="fastapi run main.py --port ${PORT}"`,
 			},
 		},

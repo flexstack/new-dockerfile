@@ -447,8 +447,8 @@ In order of precedence:
   - `START_CMD` - The command to start the project (default: detected from source code)
 
 #### Install Command
-- If Poetry: `poetry install --no-dev --no-interactive --no-ansi`
-- If Pipenv: `PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy`
+- If Poetry: `poetry install --no-dev --no-ansi --no-root`
+- If Pipenv: `pipenv install --dev --system --deploy`
 - If PDM: `pdm install --prod`
 - If `pyproject.toml` exists: `pip install --upgrade build setuptools && pip install .`
 - If `requirements.txt` exists: `pip install -r requirements.txt`

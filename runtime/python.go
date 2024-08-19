@@ -62,18 +62,22 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	installCMD := ""
+	//packageManager := PythonPackageManagerPip
 	if _, err := os.Stat(filepath.Join(path, "requirements.txt")); err == nil {
 		d.Log.Info("Detected requirements.txt file")
 		installCMD = "pip install -r requirements.txt"
 	} else if _, err := os.Stat(filepath.Join(path, "poetry.lock")); err == nil {
 		d.Log.Info("Detected a poetry project")
-		installCMD = "poetry install --no-dev --no-interactive --no-ansi"
+		installCMD = "pip install poetry && poetry install --no-dev --no-ansi --no-root"
+		//packageManager = PythonPackageManagerPoetry
 	} else if _, err := os.Stat(filepath.Join(path, "Pipfile.lock")); err == nil {
 		d.Log.Info("Detected a pipenv project")
-		installCMD = "PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"
+		installCMD = "pip install pipenv && pipenv install --dev --system --deploy"
+		//packageManager = PythonPackageManagerPipenv
 	} else if _, err := os.Stat(filepath.Join(path, "pdm.lock")); err == nil {
 		d.Log.Info("Detected a pdm project")
-		installCMD = "pdm install --prod"
+		installCMD = "pip install pdm && pdm install --prod"
+		//packageManager = PythonPackageManagerPdm
 	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
 		d.Log.Info("Detected a pyproject.toml file")
 		installCMD = "pip install --upgrade build setuptools && pip install ."
@@ -173,14 +177,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
 RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
+ENV PYTHONDONTWRITEBYTECODE=1 \
+  PYTHONUNBUFFERED=1 \
+  POETRY_NO_INTERACTION=1 \
+  POETRY_VIRTUALENVS_CREATE=false \
+  POETRY_CACHE_DIR='/var/cache/pypoetry' \
+  POETRY_HOME='/usr/local'
 
 COPY --chown=nonroot:nonroot . .
 ARG INSTALL_CMD={{.InstallCMD}}
 RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
 
 ENV PORT=8080
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
 USER nonroot:nonroot
 
 ARG START_CMD={{.StartCMD}}
@@ -340,3 +348,12 @@ func isFastAPIProject(path string) bool {
 
 	return false
 }
+
+type PythonPackageManager string
+
+const (
+	PythonPackageManagerPip    PythonPackageManager = "pip"
+	PythonPackageManagerPoetry PythonPackageManager = "poetry"
+	PythonPackageManagerPipenv PythonPackageManager = "pipenv"
+	PythonPackageManagerPdm    PythonPackageManager = "pdm"
+)
