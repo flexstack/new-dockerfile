@@ -25,6 +25,7 @@ func (d *Python) Match(path string) bool {
 	checkPaths := []string{
 		filepath.Join(path, "requirements.txt"),
 		filepath.Join(path, "poetry.lock"),
+		filepath.Join(path, "uv.lock"),
 		filepath.Join(path, "Pipfile.lock"),
 		filepath.Join(path, "pyproject.toml"),
 		filepath.Join(path, "pdm.lock"),
@@ -62,22 +63,26 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	installCMD := ""
-	//packageManager := PythonPackageManagerPip
+	packageManager := PythonPackageManagerPip
 	if _, err := os.Stat(filepath.Join(path, "requirements.txt")); err == nil {
 		d.Log.Info("Detected requirements.txt file")
-		installCMD = "pip install -r requirements.txt"
+		installCMD = "pip install --system --no-cache -r requirements.txt"
+	} else if _, err := os.Stat(filepath.Join(path, "uv.lock")); err == nil {
+		d.Log.Info("Detected a uv project")
+		installCMD = "pip install uv && uv sync --python-preference=only-system --no-cache --no-dev"
+		packageManager = PythonPackageManagerUv
 	} else if _, err := os.Stat(filepath.Join(path, "poetry.lock")); err == nil {
 		d.Log.Info("Detected a poetry project")
 		installCMD = "pip install poetry && poetry install --no-dev --no-ansi --no-root"
-		//packageManager = PythonPackageManagerPoetry
+		packageManager = PythonPackageManagerPoetry
 	} else if _, err := os.Stat(filepath.Join(path, "Pipfile.lock")); err == nil {
 		d.Log.Info("Detected a pipenv project")
 		installCMD = "pip install pipenv && pipenv install --dev --system --deploy"
-		//packageManager = PythonPackageManagerPipenv
+		packageManager = PythonPackageManagerPipenv
 	} else if _, err := os.Stat(filepath.Join(path, "pdm.lock")); err == nil {
 		d.Log.Info("Detected a pdm project")
 		installCMD = "pip install pdm && pdm install --prod"
-		//packageManager = PythonPackageManagerPdm
+		packageManager = PythonPackageManagerPdm
 	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
 		d.Log.Info("Detected a pyproject.toml file")
 		installCMD = "pip install --upgrade build setuptools && pip install ."
@@ -146,6 +151,14 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 		}
 	}
 
+	packagerInstructions := ""
+	switch packageManager {
+	case PythonPackageManagerPoetry:
+		packagerInstructions = poetryInstructions
+	case PythonPackageManagerUv:
+		packagerInstructions = uvInstructions
+	}
+
 	d.Log.Info(
 		fmt.Sprintf(`Detected defaults 
   Python version       : %s
@@ -158,9 +171,10 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
-		"Version":    *version,
-		"InstallCMD": safeCommand(installCMD),
-		"StartCMD":   safeCommand(startCMD),
+		"Version":              *version,
+		"InstallCMD":           safeCommand(installCMD),
+		"StartCMD":             safeCommand(startCMD),
+		"PackagerInstructions": packagerInstructions,
 	}); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
@@ -177,13 +191,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
 RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
+RUN mkdir -p /var/cache
+RUN chown -R nonroot:nonroot /var/cache
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV POETRY_NO_INTERACTION=1
-ENV POETRY_VIRTUALENVS_CREATE=false
-ENV POETRY_CACHE_DIR='/var/cache/pypoetry'
-ENV POETRY_HOME='/usr/local'
+{{ .PackagerInstructions }}
 
 COPY --chown=nonroot:nonroot . .
 ARG INSTALL_CMD={{.InstallCMD}}
@@ -198,6 +211,19 @@ ENV START_CMD=${START_CMD}
 RUN if [ -z "${START_CMD}" ]; then echo "Unable to detect a container start command" && exit 1; fi
 CMD ${START_CMD}
 `)
+
+var poetryInstructions = `
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VIRTUALENVS_CREATE=false
+ENV POETRY_CACHE_DIR='/var/cache/pypoetry'
+ENV POETRY_HOME='/usr/local'`
+
+var uvInstructions = `
+# Set the UV_CACHE_DIR environment variable to a directory where uv will store its cache
+ENV UV_CACHE_DIR='/var/cache/uv'
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"`
 
 func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 	version := ""
@@ -356,6 +382,7 @@ type PythonPackageManager string
 const (
 	PythonPackageManagerPip    PythonPackageManager = "pip"
 	PythonPackageManagerPoetry PythonPackageManager = "poetry"
+	PythonPackageManagerUv     PythonPackageManager = "uv"
 	PythonPackageManagerPipenv PythonPackageManager = "pipenv"
 	PythonPackageManagerPdm    PythonPackageManager = "pdm"
 )
