@@ -177,6 +177,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
 RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV POETRY_NO_INTERACTION=1
