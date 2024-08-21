@@ -50,6 +50,7 @@ func TestPHPGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -68,6 +69,20 @@ func TestPHPGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=8.2.0`, `ARG INSTALL_CMD="yarn --frozen-lockfile"`, `ARG BUILD_CMD="yarn run build"`, `ARG START_CMD="apache2-foreground`},
 		},
 		{
+			name: "PHP project with build mounts",
+			path: "../testdata/php-npm",
+			data: map[string]string{"BuildMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
+			name: "PHP project with install mounts",
+			path: "../testdata/php-npm",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name:     "Not a PHP project",
 			path:     "../testdata/deno",
 			expected: []any{`ARG VERSION=8.3`, regexp.MustCompile(`^ARG INSTALL_CMD=$`), regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="apache2-foreground`},
@@ -77,7 +92,7 @@ func TestPHPGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			php := &runtime.PHP{Log: logger}
-			dockerfile, err := php.GenerateDockerfile(test.path)
+			dockerfile, err := php.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

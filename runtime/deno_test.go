@@ -45,6 +45,7 @@ func TestDenoGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -58,6 +59,13 @@ func TestDenoGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=1.43.3`, `ARG INSTALL_CMD="deno task cache"`, `ARG START_CMD="deno task start"`},
 		},
 		{
+			name: "Deno project with install mounts",
+			path: "../testdata/deno-jsonc",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name:     "Not a Deno project",
 			path:     "../testdata/ruby",
 			expected: []any{`ARG VERSION=latest`, regexp.MustCompile(`^ARG INSTALL_CMD=$`), regexp.MustCompile(`^ARG START_CMD=$`)},
@@ -67,7 +75,7 @@ func TestDenoGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			deno := &runtime.Deno{Log: logger}
-			dockerfile, err := deno.GenerateDockerfile(test.path)
+			dockerfile, err := deno.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

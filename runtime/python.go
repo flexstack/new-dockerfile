@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -50,7 +51,7 @@ func (d *Python) Match(path string) bool {
 	return false
 }
 
-func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Python) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(pythonTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -66,7 +67,7 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	packageManager := PythonPackageManagerPip
 	if _, err := os.Stat(filepath.Join(path, "requirements.txt")); err == nil {
 		d.Log.Info("Detected requirements.txt file")
-		installCMD = "pip install --system --no-cache -r requirements.txt"
+		installCMD = "pip install --no-cache -r requirements.txt"
 	} else if _, err := os.Stat(filepath.Join(path, "uv.lock")); err == nil {
 		d.Log.Info("Detected a uv project")
 		installCMD = "pip install uv && uv sync --python-preference=only-system --no-cache --no-dev"
@@ -170,12 +171,16 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version":              *version,
 		"InstallCMD":           safeCommand(installCMD),
 		"StartCMD":             safeCommand(startCMD),
 		"PackagerInstructions": packagerInstructions,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 

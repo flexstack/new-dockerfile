@@ -420,6 +420,7 @@ In order of precedence:
 
 #### Detected Files
   - `requirements.txt`
+  - `uv.lock`
   - `poetry.lock`
   - `Pipefile.lock`
   - `pyproject.toml`
@@ -447,9 +448,10 @@ In order of precedence:
   - `START_CMD` - The command to start the project (default: detected from source code)
 
 #### Install Command
-- If Poetry: `poetry install --no-dev --no-ansi --no-root`
+- If Poetry: `pip install poetry && poetry install --no-dev --no-ansi --no-root`
 - If Pipenv: `pipenv install --dev --system --deploy`
-- If PDM: `pdm install --prod`
+- If uv: `pip install uv && uv sync --python-preference=only-system --no-cache --no-dev`
+- If PDM: `pip install pdm && pdm install --prod`
 - If `pyproject.toml` exists: `pip install --upgrade build setuptools && pip install .`
 - If `requirements.txt` exists: `pip install -r requirements.txt`
 

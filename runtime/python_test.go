@@ -67,7 +67,7 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			path: "../testdata/python",
 			expected: []any{
 				`ARG VERSION=3.12`,
-				`ARG INSTALL_CMD="pip install -r requirements.txt"`,
+				`ARG INSTALL_CMD="pip install --no-cache -r requirements.txt"`,
 				`ARG START_CMD="python main.py"`,
 			},
 		},

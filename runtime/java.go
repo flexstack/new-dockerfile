@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -46,7 +47,7 @@ func (d *Java) Match(path string) bool {
 	return false
 }
 
-func (d *Java) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Java) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	version, err := findJDKVersion(path, d.Log)
 	if err != nil {
 		return nil, err
@@ -124,14 +125,17 @@ func (d *Java) GenerateDockerfile(path string) ([]byte, error) {
 		startCMDJSON, _ := json.Marshal(startCMD)
 		startCMD = string(startCMDJSON)
 	}
-
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version":       *version,
 		"GradleVersion": gradleVersion,
 		"MavenVersion":  mavenVersion,
 		"BuildCMD":      buildCMD,
 		"StartCMD":      startCMD,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 

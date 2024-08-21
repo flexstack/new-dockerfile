@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -38,7 +39,7 @@ func (d *PHP) Match(path string) bool {
 	return false
 }
 
-func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
+func (d *PHP) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(phpTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -128,12 +129,16 @@ func (d *PHP) GenerateDockerfile(path string) ([]byte, error) {
 	)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version":    *version,
 		"InstallCMD": safeCommand(installCMD),
 		"BuildCMD":   safeCommand(buildCMD),
 		"StartCMD":   safeCommand(startCMD),
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -150,8 +155,8 @@ COPY . .
 
 ARG INSTALL_CMD={{.InstallCMD}}
 ARG BUILD_CMD={{.BuildCMD}}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
-RUN if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
+RUN {{.InstallMounts}}if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
+RUN {{.BuildMounts}}if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 FROM php:${VERSION}-apache AS runtime
 

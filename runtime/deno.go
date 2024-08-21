@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/fs"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -70,7 +71,7 @@ func (d *Deno) Match(path string) bool {
 	return detected
 }
 
-func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Deno) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(denoTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -156,11 +157,15 @@ func (d *Deno) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version":    *version,
 		"InstallCMD": installCMD,
 		"StartCMD":   startCMD,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -192,7 +197,7 @@ USER nonroot:nonroot
 ENV PORT=8080
 EXPOSE ${PORT}
 ARG INSTALL_CMD={{.InstallCMD}}
-RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
+RUN {{.InstallMounts}}if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD"; fi
 
 ARG START_CMD={{.StartCMD}}
 ENV START_CMD=${START_CMD}
