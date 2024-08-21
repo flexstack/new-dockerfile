@@ -55,6 +55,7 @@ func TestRubyGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -88,6 +89,20 @@ func TestRubyGenerateDockerfile(t *testing.T) {
 			},
 		},
 		{
+			name: "Ruby project with build mounts",
+			path: "../testdata/ruby-config-ru",
+			data: map[string]string{"BuildMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
+			name: "Ruby project with install mounts",
+			path: "../testdata/ruby-config-ru",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name: "Ruby project with rails",
 			path: "../testdata/ruby-rails",
 			expected: []any{
@@ -107,7 +122,7 @@ func TestRubyGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ruby := &runtime.Ruby{Log: logger}
-			dockerfile, err := ruby.GenerateDockerfile(test.path)
+			dockerfile, err := ruby.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,7 +43,7 @@ func (d *NextJS) Match(path string) bool {
 	return false
 }
 
-func (d *NextJS) GenerateDockerfile(path string) ([]byte, error) {
+func (d *NextJS) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	nextJSTemplate := nextJSServerTemplate
 	nextConfigFiles := []string{
 		"next.config.js",
@@ -92,9 +93,13 @@ func (d *NextJS) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version": *version,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -112,7 +117,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* bun.lockb* ./
-RUN if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+RUN {{.InstallMounts}}if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f bun.lockb ]; then npm i -g bun && bun install; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
@@ -130,7 +135,7 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 ENV NEXT_TELEMETRY_DISABLED 1
 
-RUN if [ -f yarn.lock ]; then yarn run build; \
+RUN {{.BuildMounts}}if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
   elif [ -f bun.lockb ]; then npm i -g bun && bun run build; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
@@ -163,8 +168,8 @@ COPY --from=builder --chown=nonroot:nonroot /app/.next/static ./.next/static
 
 USER nonroot
 
-EXPOSE 3000
 ENV PORT=3000
+EXPOSE ${PORT}
 
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
@@ -180,7 +185,7 @@ FROM ${BUILDER}:${VERSION}-slim AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* bun.lockb* ./
-RUN if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+RUN {{.InstallMounts}}if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f bun.lockb ]; then npm i -g bun && bun install; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
@@ -193,7 +198,7 @@ ENV NODE_ENV=production
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN if [ -f yarn.lock ]; then yarn run build; \
+RUN {{.BuildMounts}}if [ -f yarn.lock ]; then yarn run build; \
   elif [ -f package-lock.json ]; then npm run build; \
   elif [ -f bun.lockb ]; then npm i -g bun && bun run build; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
@@ -219,5 +224,6 @@ USER nonroot
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV PORT=8080
+EXPOSE ${PORT}
 CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0"]
 `)

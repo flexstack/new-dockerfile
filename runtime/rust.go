@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +37,7 @@ func (d *Rust) Match(path string) bool {
 	return false
 }
 
-func (d *Rust) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Rust) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(rustlangTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -87,9 +88,13 @@ func (d *Rust) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"BinName": binName,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -123,5 +128,6 @@ COPY --chown=nonroot:nonroot --from=build /app/target/*/release/${BIN_NAME} ./ap
 USER nonroot:nonroot
 
 ENV PORT=8080
+EXPOSE ${PORT}
 CMD ["/app/app"]
 `)

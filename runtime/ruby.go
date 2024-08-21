@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,7 +40,7 @@ func (d *Ruby) Match(path string) bool {
 	return false
 }
 
-func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Ruby) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(rubyTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -117,12 +118,16 @@ func (d *Ruby) GenerateDockerfile(path string) ([]byte, error) {
 	)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version":    *version,
 		"InstallCMD": safeCommand(installCMD),
 		"BuildCMD":   safeCommand(buildCMD),
 		"StartCMD":   safeCommand(startCMD),
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -145,10 +150,11 @@ ENV NODE_ENV=production
 RUN chown -R nonroot:nonroot /app
 COPY --chown=nonroot:nonroot . .
 
-RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
-RUN  if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
+RUN {{.InstallMounts}}if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
+RUN {{.BuildMounts}}if [ ! -z "${BUILD_CMD}" ]; then sh -c "$BUILD_CMD"; fi
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG START_CMD={{.StartCMD}}

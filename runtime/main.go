@@ -7,7 +7,7 @@ type Runtime interface {
 	// Returns true if the runtime can be used for the given path.
 	Match(path string) bool
 	// Generates a Dockerfile for the given path.
-	GenerateDockerfile(path string) ([]byte, error)
+	GenerateDockerfile(path string, data ...map[string]string) ([]byte, error)
 }
 
 type RuntimeName string

@@ -420,6 +420,7 @@ In order of precedence:
 
 #### Detected Files
   - `requirements.txt`
+  - `uv.lock`
   - `poetry.lock`
   - `Pipefile.lock`
   - `pyproject.toml`
@@ -447,14 +448,16 @@ In order of precedence:
   - `START_CMD` - The command to start the project (default: detected from source code)
 
 #### Install Command
-- If Poetry: `poetry install --no-dev --no-interactive --no-ansi`
-- If Pipenv: `PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy`
-- If PDM: `pdm install --prod`
+- If Poetry: `pip install poetry && poetry install --no-dev --no-ansi --no-root`
+- If Pipenv: `pipenv install --dev --system --deploy`
+- If uv: `pip install uv && uv sync --python-preference=only-system --no-cache --no-dev`
+- If PDM: `pip install pdm && pdm install --prod`
 - If `pyproject.toml` exists: `pip install --upgrade build setuptools && pip install .`
 - If `requirements.txt` exists: `pip install -r requirements.txt`
 
 #### Start Command
 - If Django is detected: `python manage.py runserver 0.0.0.0:${PORT}`
+- If FastAPI is detected: `fastapi run [main.py, app.py, application.py, app/main.py, app/application.py, app/__init__.py] --port ${PORT}`
 - If `pyproject.toml` exists: `python -m ${projectName}`
 - Otherwise: `python [main.py, app.py, application.py, app/main.py, app/application.py, app/__init__.py]`
 

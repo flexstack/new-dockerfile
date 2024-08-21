@@ -50,6 +50,7 @@ func TestNodeGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -68,6 +69,20 @@ func TestNodeGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=16.0.0`, `ARG INSTALL_CMD="yarn --frozen-lockfile"`, `ARG BUILD_CMD="yarn run build:prod"`, `ARG START_CMD="yarn run start-it"`},
 		},
 		{
+			name: "Node project with build mounts",
+			path: "../testdata/node-yarn",
+			data: map[string]string{"BuildMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
+			name: "Node project with install mounts",
+			path: "../testdata/node-yarn",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name:     "Not a Node project",
 			path:     "../testdata/deno",
 			expected: []any{`ARG VERSION=lts`, regexp.MustCompile(`^ARG INSTALL_CMD="npm ci"`), regexp.MustCompile(`^ARG BUILD_CMD=$`), regexp.MustCompile(`^ARG START_CMD=$`)},
@@ -77,7 +92,7 @@ func TestNodeGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			node := &runtime.Node{Log: logger}
-			dockerfile, err := node.GenerateDockerfile(test.path)
+			dockerfile, err := node.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

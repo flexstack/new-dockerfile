@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -35,7 +36,7 @@ func (d *Elixir) Match(path string) bool {
 	return false
 }
 
-func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Elixir) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(elixirTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -68,11 +69,15 @@ func (d *Elixir) GenerateDockerfile(path string) ([]byte, error) {
 	)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"ElixirVersion": *elixirVersion,
 		"OTPVersion":    strings.Split(*otpVersion, ".")[0],
 		"BinName":       binName,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -129,6 +134,7 @@ COPY --from=build --chown=nonroot:nonroot /app/_build/${MIX_ENV}/rel/${BIN_NAME}
 RUN cp /app/bin/${BIN_NAME} /app/bin/server
 
 ENV PORT=8080
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 CMD ["/app/bin/server", "start"]

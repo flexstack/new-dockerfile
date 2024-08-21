@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -37,7 +38,7 @@ func (d *Static) Match(path string) bool {
 	return false
 }
 
-func (d *Static) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Static) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(staticTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -56,9 +57,13 @@ func (d *Static) GenerateDockerfile(path string) ([]byte, error) {
 	d.Log.Info("Detected root directory: " + serverRoot)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"ServerRoot": serverRoot,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -73,6 +78,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget && apt-get
 COPY . .
 
 ENV PORT=8080
+EXPOSE ${PORT}
 ENV SERVER_PORT=${PORT}
 ARG SERVER_ROOT={{.ServerRoot}}
 ENV SERVER_ROOT=${SERVER_ROOT}

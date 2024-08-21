@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -36,7 +37,7 @@ func (d *Golang) Match(path string) bool {
 	return false
 }
 
-func (d *Golang) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Golang) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(golangTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -84,10 +85,14 @@ func (d *Golang) GenerateDockerfile(path string) ([]byte, error) {
 
 	d.Log.Info("Using package: " + pkg)
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
+	templateData := map[string]string{
 		"Version": *version,
 		"Package": pkg,
-	}); err != nil {
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 

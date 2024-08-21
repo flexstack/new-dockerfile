@@ -45,6 +45,7 @@ func TestNextJSGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -58,6 +59,20 @@ func TestNextJSGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=16.0.0`, `CMD HOSTNAME="0.0.0.0" node server.js`},
 		},
 		{
+			name: "NextJS project with build mounts",
+			path: "../testdata/nextjs-standalone",
+			data: map[string]string{"BuildMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
+			name: "NextJS project with install mounts",
+			path: "../testdata/nextjs-standalone",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name:     "Not a NextJS project",
 			path:     "../testdata/deno",
 			expected: []any{`ARG VERSION=lts`, `CMD ["node_modules/.bin/next", "start", "-H", "0.0.0.0"]`},
@@ -67,7 +82,7 @@ func TestNextJSGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			nextjs := &runtime.NextJS{Log: logger}
-			dockerfile, err := nextjs.GenerateDockerfile(test.path)
+			dockerfile, err := nextjs.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

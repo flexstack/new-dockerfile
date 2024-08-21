@@ -45,6 +45,7 @@ func TestBunGenerateDockerfile(t *testing.T) {
 	tests := []struct {
 		name     string
 		path     string
+		data     map[string]string
 		expected []any
 	}{
 		{
@@ -58,6 +59,20 @@ func TestBunGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=1.1.4`, `ARG INSTALL_CMD="bun install"`, `ARG BUILD_CMD="bun run build:prod"`, `ARG START_CMD="bun run start:production"`},
 		},
 		{
+			name: "Bun project with build mounts",
+			path: "../testdata/bun-bunfig",
+			data: map[string]string{"BuildMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
+			name: "Bun project with install mounts",
+			path: "../testdata/bun-bunfig",
+			data: map[string]string{"InstallMounts": `--mount=type=secret,id=_env,target=/app/.env \
+    `},
+			expected: []any{regexp.MustCompile(`^RUN --mount=type=secret,id=_env,target=/app/.env \\$`)},
+		},
+		{
 			name:     "Not a Bun project",
 			path:     "../testdata/deno",
 			expected: []any{`ARG VERSION=1`, regexp.MustCompile(`^ARG INSTALL_CMD="bun install"`), regexp.MustCompile(`^ARG BUILD_CMD=$`), regexp.MustCompile(`^ARG START_CMD=$`)},
@@ -67,7 +82,7 @@ func TestBunGenerateDockerfile(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			bun := &runtime.Bun{Log: logger}
-			dockerfile, err := bun.GenerateDockerfile(test.path)
+			dockerfile, err := bun.GenerateDockerfile(test.path, test.data)
 			if err != nil {
 				t.Errorf("unexpected error: %v", err)
 			}

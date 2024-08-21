@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,7 @@ func (d *Python) Match(path string) bool {
 	checkPaths := []string{
 		filepath.Join(path, "requirements.txt"),
 		filepath.Join(path, "poetry.lock"),
+		filepath.Join(path, "uv.lock"),
 		filepath.Join(path, "Pipfile.lock"),
 		filepath.Join(path, "pyproject.toml"),
 		filepath.Join(path, "pdm.lock"),
@@ -49,7 +51,7 @@ func (d *Python) Match(path string) bool {
 	return false
 }
 
-func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
+func (d *Python) GenerateDockerfile(path string, data ...map[string]string) ([]byte, error) {
 	tmpl, err := template.New("Dockerfile").Parse(pythonTemplate)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to parse template")
@@ -62,50 +64,61 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	}
 
 	installCMD := ""
+	packageManager := PythonPackageManagerPip
 	if _, err := os.Stat(filepath.Join(path, "requirements.txt")); err == nil {
 		d.Log.Info("Detected requirements.txt file")
-		installCMD = "pip install -r requirements.txt"
+		installCMD = "pip install --no-cache -r requirements.txt"
+	} else if _, err := os.Stat(filepath.Join(path, "uv.lock")); err == nil {
+		d.Log.Info("Detected a uv project")
+		installCMD = "pip install uv && uv sync --python-preference=only-system --no-cache --no-dev"
+		packageManager = PythonPackageManagerUv
 	} else if _, err := os.Stat(filepath.Join(path, "poetry.lock")); err == nil {
 		d.Log.Info("Detected a poetry project")
-		installCMD = "poetry install --no-dev --no-interactive --no-ansi"
+		installCMD = "pip install poetry && poetry install --no-dev --no-ansi --no-root"
+		packageManager = PythonPackageManagerPoetry
 	} else if _, err := os.Stat(filepath.Join(path, "Pipfile.lock")); err == nil {
 		d.Log.Info("Detected a pipenv project")
-		installCMD = "PIPENV_VENV_IN_PROJECT=1 pipenv install --deploy"
+		installCMD = "pip install pipenv && pipenv install --dev --system --deploy"
+		packageManager = PythonPackageManagerPipenv
 	} else if _, err := os.Stat(filepath.Join(path, "pdm.lock")); err == nil {
 		d.Log.Info("Detected a pdm project")
-		installCMD = "pdm install --prod"
+		installCMD = "pip install pdm && pdm install --prod"
+		packageManager = PythonPackageManagerPdm
 	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
 		d.Log.Info("Detected a pyproject.toml file")
 		installCMD = "pip install --upgrade build setuptools && pip install ."
 	}
 
 	managePy := isDjangoProject(path)
+	isFastAPI := isFastAPIProject(path)
 	startCMD := ""
 	projectName := filepath.Base(path)
 
 	if managePy != nil {
 		d.Log.Info("Detected Django project")
 		startCMD = fmt.Sprintf(`python ` + *managePy + ` runserver 0.0.0.0:${PORT}`)
-	} else if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
-		f, err := os.Open(filepath.Join(path, "pyproject.toml"))
-		if err == nil {
-			var pyprojectTOML map[string]interface{}
-			err := toml.NewDecoder(f).Decode(&pyprojectTOML)
+	} else if !isFastAPI {
+		if _, err := os.Stat(filepath.Join(path, "pyproject.toml")); err == nil {
+			f, err := os.Open(filepath.Join(path, "pyproject.toml"))
 			if err == nil {
-				if project, ok := pyprojectTOML["project"].(map[string]interface{}); ok {
-					if name, ok := project["name"].(string); ok {
-						projectName = name
-					}
-				} else if project, ok := pyprojectTOML["tool.poetry"].(map[string]interface{}); ok {
-					if name, ok := project["name"].(string); ok {
-						projectName = name
+				var pyprojectTOML map[string]interface{}
+				err := toml.NewDecoder(f).Decode(&pyprojectTOML)
+				if err == nil {
+					if project, ok := pyprojectTOML["project"].(map[string]interface{}); ok {
+						if name, ok := project["name"].(string); ok {
+							projectName = name
+						}
+					} else if project, ok := pyprojectTOML["tool.poetry"].(map[string]interface{}); ok {
+						if name, ok := project["name"].(string); ok {
+							projectName = name
+						}
 					}
 				}
-			}
 
-			if projectName != "" {
-				startCMD = fmt.Sprintf(`python -m %s`, projectName)
-				d.Log.Info("Detected start command via pyproject.toml")
+				if projectName != "" {
+					startCMD = fmt.Sprintf(`python -m %s`, projectName)
+					d.Log.Info("Detected start command via pyproject.toml")
+				}
 			}
 		}
 	}
@@ -129,10 +142,22 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 				continue
 			}
 
-			startCMD = fmt.Sprintf(`python %s`, fn)
-			d.Log.Info("Detected start command via main file: " + startCMD)
+			if isFastAPI {
+				startCMD = fmt.Sprintf(`fastapi run %s --port ${PORT}`, fn)
+			} else {
+				startCMD = fmt.Sprintf(`python %s`, fn)
+				d.Log.Info("Detected start command via main file: " + startCMD)
+			}
 			break
 		}
+	}
+
+	packagerInstructions := ""
+	switch packageManager {
+	case PythonPackageManagerPoetry:
+		packagerInstructions = poetryInstructions
+	case PythonPackageManagerUv:
+		packagerInstructions = uvInstructions
 	}
 
 	d.Log.Info(
@@ -146,11 +171,16 @@ func (d *Python) GenerateDockerfile(path string) ([]byte, error) {
 	)
 
 	var buf bytes.Buffer
-	if err := tmpl.Option("missingkey=zero").Execute(&buf, map[string]string{
-		"Version":    *version,
-		"InstallCMD": safeCommand(installCMD),
-		"StartCMD":   safeCommand(startCMD),
-	}); err != nil {
+	templateData := map[string]string{
+		"Version":              *version,
+		"InstallCMD":           safeCommand(installCMD),
+		"StartCMD":             safeCommand(startCMD),
+		"PackagerInstructions": packagerInstructions,
+	}
+	if len(data) > 0 {
+		maps.Copy(templateData, data[0])
+	}
+	if err := tmpl.Option("missingkey=zero").Execute(&buf, templateData); err != nil {
 		return nil, fmt.Errorf("Failed to execute template")
 	}
 
@@ -166,14 +196,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends wget ca-certifi
 RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
+RUN mkdir -p /var/cache
+RUN chown -R nonroot:nonroot /var/cache
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+{{ .PackagerInstructions }}
 
 COPY --chown=nonroot:nonroot . .
 ARG INSTALL_CMD={{.InstallCMD}}
 RUN if [ ! -z "${INSTALL_CMD}" ]; then sh -c "$INSTALL_CMD";  fi
 
 ENV PORT=8080
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+EXPOSE ${PORT}
 USER nonroot:nonroot
 
 ARG START_CMD={{.StartCMD}}
@@ -181,6 +216,19 @@ ENV START_CMD=${START_CMD}
 RUN if [ -z "${START_CMD}" ]; then echo "Unable to detect a container start command" && exit 1; fi
 CMD ${START_CMD}
 `)
+
+var poetryInstructions = `
+ENV POETRY_NO_INTERACTION=1
+ENV POETRY_VIRTUALENVS_CREATE=false
+ENV POETRY_CACHE_DIR='/var/cache/pypoetry'
+ENV POETRY_HOME='/usr/local'`
+
+var uvInstructions = `
+# Set the UV_CACHE_DIR environment variable to a directory where uv will store its cache
+ENV UV_CACHE_DIR='/var/cache/uv'
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"`
 
 func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 	version := ""
@@ -305,3 +353,41 @@ func isDjangoProject(path string) *string {
 
 	return nil
 }
+
+func isFastAPIProject(path string) bool {
+	packagerFiles := []string{"requirements.txt", "pyproject.toml", "Pipfile"}
+
+	for _, file := range packagerFiles {
+		_, err := os.Stat(filepath.Join(path, file))
+		if err == nil {
+			f, err := os.Open(filepath.Join(path, file))
+			if err != nil {
+				return false
+			}
+
+			defer f.Close()
+
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				line := scanner.Text()
+				if strings.Contains(strings.ToLower(line), "fastapi") {
+					return true
+				}
+			}
+
+			f.Close()
+		}
+	}
+
+	return false
+}
+
+type PythonPackageManager string
+
+const (
+	PythonPackageManagerPip    PythonPackageManager = "pip"
+	PythonPackageManagerPoetry PythonPackageManager = "poetry"
+	PythonPackageManagerUv     PythonPackageManager = "uv"
+	PythonPackageManagerPipenv PythonPackageManager = "pipenv"
+	PythonPackageManagerPdm    PythonPackageManager = "pdm"
+)
