@@ -13,6 +13,8 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 type Node struct {
@@ -220,6 +222,17 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 		".nvmrc",
 		".node-version",
 		".tool-versions",
+		"package.json",
+	}
+
+	// This is really jank but it should be fine
+	nodeVersionsToCheck := []string{}
+	for i := 0; i < 60; i++ {
+		for j := 0; j < 60; j++ {
+			for k := 0; k < 60; k++ {
+				nodeVersionsToCheck = append(nodeVersionsToCheck, fmt.Sprintf("%d.%d.%d", i, j, k))
+			}
+		}
 	}
 
 	for _, file := range versionFiles {
@@ -234,6 +247,42 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 
 			defer f.Close()
 			switch file {
+			case "package.json":
+				// Check package.json for engines.node
+				var packageJSON map[string]interface{}
+				if err := json.NewDecoder(f).Decode(&packageJSON); err != nil {
+					return nil, fmt.Errorf("Failed to decode package.json file")
+				}
+
+				if engines, ok := packageJSON["engines"].(map[string]interface{}); ok {
+					if nodeVersion, ok := engines["node"].(string); ok {
+						ver, err := semver.NewVersion(nodeVersion)
+						if err != nil {
+							constraints, err := semver.NewConstraint(nodeVersion)
+							if err != nil {
+								continue
+							}
+
+							for _, v := range nodeVersionsToCheck {
+								semv, _ := semver.NewVersion(v)
+								if constraints.Check(semv) {
+									ver = semv
+									break
+								}
+							}
+						}
+						if ver != nil {
+							if ver.Minor() > 0 {
+								version = fmt.Sprintf("%d.%d", ver.Major(), ver.Minor())
+							} else {
+								version = fmt.Sprint(ver.Major())
+							}
+							log.Info("Detected Node version in package.json: " + version)
+							break
+						}
+					}
+				}
+
 			case ".tool-versions":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {

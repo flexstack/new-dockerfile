@@ -120,9 +120,9 @@ RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
 RUN chown -R nonroot:nonroot /app
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 ENV MIX_ENV="prod"
 
