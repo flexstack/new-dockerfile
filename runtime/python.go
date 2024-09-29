@@ -235,6 +235,7 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 	versionFiles := []string{
 		".tool-versions",
 		".python-version",
+		".mise.toml",
 		"runtime.txt",
 	}
 
@@ -295,6 +296,23 @@ func findPythonVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read runtime.txt file")
 				}
 
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				pythonVersion, ok := mise.Tools["python"].(string)
+				if !ok {
+					versions, ok := mise.Tools["python"].([]string)
+					if ok {
+						pythonVersion = versions[0]
+					}
+				}
+				if pythonVersion != "" {
+					version = pythonVersion
+					log.Info("Detected Python version in .mise.toml: " + version)
+					break
+				}
 			}
 
 			f.Close()

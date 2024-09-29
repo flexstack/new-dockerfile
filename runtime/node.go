@@ -15,6 +15,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Node struct {
@@ -222,6 +223,7 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 		".nvmrc",
 		".node-version",
 		".tool-versions",
+		".mise.toml",
 		"package.json",
 	}
 
@@ -298,6 +300,24 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				nodeVersion, ok := mise.Tools["node"].(string)
+				if !ok {
+					nodeVersions, ok := mise.Tools["node"].([]string)
+					if ok {
+						nodeVersion = nodeVersions[0]
+					}
+				}
+				if nodeVersion != "" {
+					version = nodeVersion
+					log.Info("Detected Node version in .mise.toml: " + version)
+					break
+				}
+
 			case ".nvmrc", ".node-version":
 				scanner := bufio.NewScanner(f)
 				for scanner.Scan() {
@@ -331,4 +351,8 @@ func findNodeVersion(path string, log *slog.Logger) (*string, error) {
 	}
 
 	return &version, nil
+}
+
+type MiseToml struct {
+	Tools map[string]interface{} `toml:"tools"`
 }

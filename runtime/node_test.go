@@ -59,6 +59,11 @@ func TestNodeGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=lts`, `ARG INSTALL_CMD="npm ci"`, regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="node index.ts"`},
 		},
 		{
+			name:     "Node project w/ mise",
+			path:     "../testdata/node-mise",
+			expected: []any{`ARG VERSION=14`, `ARG INSTALL_CMD="npm ci"`, regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="node index.ts"`},
+		},
+		{
 			name:     "Node project with engines",
 			path:     "../testdata/node-engines",
 			expected: []any{`ARG VERSION=14.5`, `ARG INSTALL_CMD="npm ci"`, regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="node index.ts"`},

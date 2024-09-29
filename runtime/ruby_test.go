@@ -69,6 +69,16 @@ func TestRubyGenerateDockerfile(t *testing.T) {
 			},
 		},
 		{
+			name: "Ruby project w/ mise",
+			path: "../testdata/ruby-mise",
+			expected: []any{
+				`ARG VERSION=2.7`,
+				regexp.MustCompile(`^ARG INSTALL_CMD="bundle install"$`),
+				regexp.MustCompile(`^ARG BUILD_CMD=$`),
+				regexp.MustCompile(`^ARG START_CMD=$`),
+			},
+		},
+		{
 			name: "Ruby project with config/environment.rb",
 			path: "../testdata/ruby-config-environment",
 			expected: []any{

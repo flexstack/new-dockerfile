@@ -134,10 +134,12 @@ Read on to see runtime-specific examples and how to configure the generated Dock
 
 #### Detected Files
   - `bun.lockb`
+  - `bun.lock`
   - `bunfig.toml`
 
 #### Version Detection
   - `.tool-versions` - `bun {VERSION}`
+  - `.mise.toml` - `bun = "{VERSION}"`
 
 #### Runtime Image
 `oven/bun:${VERSION}-slim`
@@ -174,6 +176,7 @@ Detected in order of precedence:
 
 #### Version Detection
   - `.tool-versions` - `deno {VERSION}`
+  - `.mise.toml` - `deno = "{VERSION}"`
 
 #### Runtime Image
 `debian:stable-slim`
@@ -209,6 +212,7 @@ Detected in order of precedence:
   - `.tool-versions` - `erlang {VERSION}`
   - `.elixir-version` - `{VERSION}`
   - `.erlang-version` - `{VERSION}`
+  - `.mise.toml` - `erlang = "{VERSION}"`
 
 #### Runtime Image
 `debian:stable-slim`
@@ -233,6 +237,7 @@ Detected in order of precedence:
 
 #### Version Detection
   - `.tool-versions` - `golang {VERSION}`
+  - `.mise.toml` - `go = "{VERSION}"`
   - `go.mod` - `go {VERSION}`
 
 #### Runtime Image
@@ -309,6 +314,8 @@ Maven version:
   - `.tool-versions` - `nodejs {VERSION}`
   - `.nvmrc` - `v{VERSION}`
   - `.node-version` - `v{VERSION}`
+  - `.mise.toml` - `node = "{VERSION}"`
+  - `package.json` - `"engines": {"node": "{VERSION}"}`
 
 #### Runtime Image
 `node:${VERSION}-slim`
@@ -437,6 +444,7 @@ In order of precedence:
 #### Version Detection
   - `.tool-versions` - `python {VERSION}`
   - `.python-version` - `{VERSION}`
+  - `.mise.toml` - `python = "{VERSION}"`
   - `runtime.txt` - `python-{VERSION}`
 
 #### Runtime Image
@@ -477,6 +485,7 @@ In order of precedence:
 #### Version Detection
   - `.tool-versions` - `ruby {VERSION}`
   - `.ruby-version` - `{VERSION}`
+  - `.mise.toml` - `ruby = "{VERSION}"`
   - `Gemfile` - `ruby '{VERSION}'`
 
 #### Runtime Image

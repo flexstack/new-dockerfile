@@ -54,6 +54,11 @@ func TestDenoGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=latest`, `ARG INSTALL_CMD="deno cache main.ts"`, `ARG START_CMD="deno run --allow-all main.ts"`},
 		},
 		{
+			name:     "Deno project w/ mise",
+			path:     "../testdata/deno-mise",
+			expected: []any{`ARG VERSION=1.43.2`, `ARG INSTALL_CMD="deno cache main.ts"`, `ARG START_CMD="deno run --allow-all main.ts"`},
+		},
+		{
 			name:     "Deno project with .ts file",
 			path:     "../testdata/deno-jsonc",
 			expected: []any{`ARG VERSION=1.43.3`, `ARG INSTALL_CMD="deno task cache"`, `ARG START_CMD="deno task start"`},

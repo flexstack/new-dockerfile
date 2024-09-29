@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Deno struct {
@@ -209,6 +211,7 @@ func findDenoVersion(path string, log *slog.Logger) (*string, error) {
 	version := ""
 	versionFiles := []string{
 		".tool-versions",
+		".mise.toml",
 	}
 
 	for _, file := range versionFiles {
@@ -237,12 +240,31 @@ func findDenoVersion(path string, log *slog.Logger) (*string, error) {
 				if err := scanner.Err(); err != nil {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
+
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				denoVersion, ok := mise.Tools["deno"].(string)
+				if !ok {
+					versions, ok := mise.Tools["deno"].([]string)
+					if ok {
+						denoVersion = versions[0]
+					}
+				}
+				if denoVersion != "" {
+					version = denoVersion
+					log.Info("Detected Deno version in .mise.toml: " + version)
+					break
+				}
 			}
 
 			f.Close()
 			if version != "" {
 				break
 			}
+
 		}
 	}
 
