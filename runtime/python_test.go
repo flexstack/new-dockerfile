@@ -72,6 +72,15 @@ func TestPythonGenerateDockerfile(t *testing.T) {
 			},
 		},
 		{
+			name: "Python project w/ mise",
+			path: "../testdata/python-mise",
+			expected: []any{
+				`ARG VERSION=3.8`,
+				`ARG INSTALL_CMD="pip install --no-cache -r requirements.txt"`,
+				`ARG START_CMD="python main.py"`,
+			},
+		},
+		{
 			name: "Python project with django",
 			path: "../testdata/python-django",
 			expected: []any{

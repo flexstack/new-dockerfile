@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Bun struct {
@@ -24,6 +26,7 @@ func (d *Bun) Name() RuntimeName {
 func (d *Bun) Match(path string) bool {
 	checkPaths := []string{
 		filepath.Join(path, "bun.lockb"),
+		filepath.Join(path, "bun.lock"),
 		filepath.Join(path, "bunfig.toml"),
 	}
 
@@ -185,6 +188,7 @@ func findBunVersion(path string, log *slog.Logger) (*string, error) {
 	version := ""
 	versionFiles := []string{
 		".tool-versions",
+		".mise.toml",
 	}
 
 	for _, file := range versionFiles {
@@ -214,6 +218,23 @@ func findBunVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .tool-versions file")
 				}
 
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				bunVersion, ok := mise.Tools["bun"].(string)
+				if !ok {
+					versions, ok := mise.Tools["bun"].([]string)
+					if ok {
+						bunVersion = versions[0]
+					}
+				}
+				if bunVersion != "" {
+					version = bunVersion
+					log.Info("Detected Bun version in .mise.toml: " + version)
+					break
+				}
 			}
 
 			f.Close()

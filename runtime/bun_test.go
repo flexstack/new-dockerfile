@@ -54,6 +54,11 @@ func TestBunGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=1`, `ARG INSTALL_CMD="bun install"`, regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="bun index.ts"`},
 		},
 		{
+			name:     "Bun project w/ mise",
+			path:     "../testdata/bun-mise",
+			expected: []any{`ARG VERSION=1.1.3`, `ARG INSTALL_CMD="bun install"`, regexp.MustCompile(`^ARG BUILD_CMD=$`), `ARG START_CMD="bun index.ts"`},
+		},
+		{
 			name:     "Bun project with .ts file",
 			path:     "../testdata/bun-bunfig",
 			expected: []any{`ARG VERSION=1.1.4`, `ARG INSTALL_CMD="bun install"`, `ARG BUILD_CMD="bun run build:prod"`, `ARG START_CMD="bun run start:production"`},

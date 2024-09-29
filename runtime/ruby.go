@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Ruby struct {
@@ -168,6 +170,7 @@ func findRubyVersion(path string, log *slog.Logger) (*string, error) {
 	versionFiles := []string{
 		".tool-versions",
 		".ruby-version",
+		".mise.toml",
 		"Gemfile",
 	}
 
@@ -243,6 +246,23 @@ func findRubyVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read Gemfile")
 				}
 
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				rubyVersion, ok := mise.Tools["ruby"].(string)
+				if !ok {
+					versions, ok := mise.Tools["ruby"].([]string)
+					if ok {
+						rubyVersion = versions[0]
+					}
+				}
+				if rubyVersion != "" {
+					version = rubyVersion
+					log.Info("Detected Python version in .mise.toml: " + version)
+					break
+				}
 			}
 
 			f.Close()

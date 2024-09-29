@@ -53,6 +53,11 @@ func TestElixirGenerateDockerfile(t *testing.T) {
 			expected: []any{`ARG VERSION=1.10`, `ARG OTP_VERSION=22`, `ARG BIN_NAME=hello`},
 		},
 		{
+			name:     "Elixir project w/ mise",
+			path:     "../testdata/elixir-mise",
+			expected: []any{`ARG VERSION=1.10`, `ARG OTP_VERSION=23`, `ARG BIN_NAME=hello`},
+		},
+		{
 			name:     "Elixir project with .tool-versions",
 			path:     "../testdata/elixir-tool-versions",
 			expected: []any{`ARG VERSION=1.11`, `ARG OTP_VERSION=23`, `ARG BIN_NAME=hello`},

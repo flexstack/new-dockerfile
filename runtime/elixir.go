@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/pelletier/go-toml/v2"
 )
 
 type Elixir struct {
@@ -120,9 +122,9 @@ RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 
 RUN chown -R nonroot:nonroot /app
 RUN sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen && locale-gen
-ENV LANG en_US.UTF-8
-ENV LANGUAGE en_US:en
-ENV LC_ALL en_US.UTF-8
+ENV LANG=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+ENV LC_ALL=en_US.UTF-8
 
 ENV MIX_ENV="prod"
 
@@ -210,6 +212,7 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 	versionFiles := []string{
 		".tool-versions",
 		".erlang-version",
+		".mise.toml",
 	}
 
 	for _, file := range versionFiles {
@@ -254,6 +257,23 @@ func findOTPVersion(path string, log *slog.Logger) (*string, error) {
 					return nil, fmt.Errorf("Failed to read .erlang-version file")
 				}
 
+			case ".mise.toml":
+				var mise MiseToml
+				if err := toml.NewDecoder(f).Decode(&mise); err != nil {
+					return nil, fmt.Errorf("Failed to decode .mise.toml file")
+				}
+				erlangVersion, ok := mise.Tools["erlang"].(string)
+				if !ok {
+					versions, ok := mise.Tools["erlang"].([]string)
+					if ok {
+						erlangVersion = versions[0]
+					}
+				}
+				if erlangVersion != "" {
+					version = erlangVersion
+					log.Info("Detected Erlang version in .mise.toml: " + version)
+					break
+				}
 			}
 
 			f.Close()
