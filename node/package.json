@@ -1,8 +1,8 @@
 {
   "name": "new-dockerfile",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "config": {
-    "bin_version": "0.5.0"
+    "bin_version": "0.5.1"
   },
   "description": "Autogenerate Dockerfiles from your project source code",
   "main": "index.js",
