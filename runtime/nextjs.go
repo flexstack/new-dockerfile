@@ -155,7 +155,7 @@ RUN update-ca-certificates 2>/dev/null || true
 RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
 
-COPY --from=builder --chown=nonroot:nonroot /app/public ./public
+COPY --from=builder --chown=nonroot:nonroot /app/public* ./public
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
@@ -215,7 +215,7 @@ RUN addgroup --system nonroot && adduser --system --ingroup nonroot nonroot
 RUN chown -R nonroot:nonroot /app
 
 COPY --from=builder --chown=nonroot:nonroot /app/next.config.* ./
-COPY --from=builder --chown=nonroot:nonroot /app/public ./public
+COPY --from=builder --chown=nonroot:nonroot /app/public* ./public
 COPY --from=builder --chown=nonroot:nonroot /app/.next ./.next
 COPY --from=builder --chown=nonroot:nonroot /app/node_modules ./node_modules
 
